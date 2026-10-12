@@ -31,55 +31,95 @@ def _jd_keywords(jd_text: str, top: int = 25) -> list[str]:
 
 
 def score_skills(skills_result: dict) -> float:
-    return skills_result["match_percentage"] / 100 * 40
+    return (skills_result.get("match_percentage", 0) / 100) * 30
 
 
 def score_keywords(resume_text: str, jd_text: str) -> float:
     keywords = _jd_keywords(jd_text)
+
     if not keywords:
-        return 0
+        return 0.0
+
     resume = resume_text.lower()
-    hits = sum(1 for k in keywords if k in resume)
-    return hits / len(keywords) * 20
+    hits = sum(1 for keyword in keywords if keyword in resume)
+
+    return (hits / len(keywords)) * 15
 
 
 def score_experience(resume_text: str) -> float:
-    t = resume_text.lower()
-    pts = 0
-    if any(k in t for k in SECTIONS["experience"]):
-        pts += 8
-    pts += min(sum(1 for v in ACTION_VERBS if v in t), 6)
-    if re.search(r"(19|20)\d{2}", t):
-        pts += 6
-    return min(pts, 20)
+    text = resume_text.lower()
+    points = 0
+
+    if any(key in text for key in SECTIONS["experience"]):
+        points += 5
+
+    points += min(sum(1 for verb in ACTION_VERBS if verb in text), 5)
+
+    if re.search(r"\b(?:19|20)\d{2}\b", text):
+        points += 5
+
+    return min(points, 15)
 
 
 def score_quantified(resume_text: str) -> float:
-    pattern = r"\d+\s?%|\$\s?\d+|\d+\s?(users|clients|customers|projects|members|requests)|\b\d{2,}\+"
+    pattern = (
+        r"\d+(?:\.\d+)?\s?%"
+        r"|\$\s?\d+(?:,\d{3})*(?:\.\d+)?"
+        r"|\b\d+\s?(?:users|clients|customers|projects|members|requests)\b"
+        r"|\b\d{2,}\+"
+    )
+
     hits = len(re.findall(pattern, resume_text.lower()))
-    return min(hits / 5, 1) * 10
+    return min(hits / 5, 1) * 7.5
 
 
 def score_structure(resume_text: str) -> float:
-    t = resume_text.lower()
-    found = sum(1 for keys in SECTIONS.values() if any(k in t for k in keys))
-    pts = found / len(SECTIONS) * 6
-    words = len(resume_text.split())
-    if 300 <= words <= 900:
-        pts += 4
-    elif 150 <= words < 300 or 900 < words <= 1200:
-        pts += 2
-    return pts
+    text = resume_text.lower()
+
+    found = sum(
+        1
+        for keys in SECTIONS.values()
+        if any(key in text for key in keys)
+    )
+
+    points = (found / len(SECTIONS)) * 4.5
+    word_count = len(resume_text.split())
+
+    if 300 <= word_count <= 900:
+        points += 3
+    elif 150 <= word_count < 300 or 900 < word_count <= 1200:
+        points += 1.5
+
+    return min(points, 7.5)
 
 
-def calculate_score(resume_text: str, jd_text: str, skills_result: dict) -> dict:
+def calculate_score(
+    resume_text: str,
+    jd_text: str,
+    skills_result: dict,
+    semantic_pct: float = 0.0,
+) -> dict:
+    # Accept a percentage between 0 and 100.
+    similarity = max(0.0, min(float(semantic_pct), 100.0))
+    similarity_points = (similarity / 100) * 25
+
     parts = [
-        ("Skills match", score_skills(skills_result), 40),
-        ("Keyword relevance", score_keywords(resume_text, jd_text), 20),
-        ("Experience", score_experience(resume_text), 20),
-        ("Quantified achievements", score_quantified(resume_text), 10),
-        ("Resume structure", score_structure(resume_text), 10),
+        ("Skills match", score_skills(skills_result), 30),
+        ("Keyword relevance", score_keywords(resume_text, jd_text), 15),
+        ("Text similarity", similarity_points, 25),
+        ("Experience", score_experience(resume_text), 15),
+        ("Quantified achievements", score_quantified(resume_text), 7.5),
+        ("Resume structure", score_structure(resume_text), 7.5),
     ]
-    breakdown = [{"label": n, "score": round(s, 1), "max": m} for n, s, m in parts]
-    total = round(sum(b["score"] for b in breakdown))
-    return {"score": total, "breakdown": breakdown}
+
+    breakdown = [
+        {"label": name, "score": round(score, 1), "max": maximum}
+        for name, score, maximum in parts
+    ]
+
+    total = round(sum(item["score"] for item in breakdown))
+
+    return {
+        "score": min(total, 100),
+        "breakdown": breakdown,
+    }
