@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RESUME ANALYZER 1</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F4F5F8;
+    --surface: #FFFFFF;
+    --ink: #1B2233;
+    --muted: #667085;
+    --line: #E1E4EB;
+    --accent: #3558E0;
+    --accent-soft: #E8EDFD;
+    --good: #1B7F55;
+    --good-soft: #E3F4EC;
+    --warn: #B4440E;
+    --warn-soft: #FDEBDD;
+    --radius: 14px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 40px 20px 72px; }
+
+  header h1 { font-size: clamp(1.8rem, 4vw, 2.5rem); line-height: 1.15; margin: 0 0 8px; letter-spacing: -0.02em; font-weight: 800; }
+  header p { margin: 0; color: var(--muted); max-width: 52ch; }
+
+  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 24px; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media (max-width: 760px) { .grid-2 { grid-template-columns: 1fr; } }
+
+  h2 { font-size: 1.05rem; margin: 0 0 14px; font-weight: 700; }
+  label.field { display: block; font-weight: 600; font-size: .92rem; margin-bottom: 8px; }
+
+  /* Upload */
+  .drop {
+    display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
+    min-height: 220px; padding: 20px;
+    border: 1.5px dashed #B9C0D0; border-radius: 12px; background: #FAFBFD;
+    cursor: pointer; transition: border-color .15s, background .15s;
+  }
+  .drop:hover, .drop.drag { border-color: var(--accent); background: var(--accent-soft); }
+  .drop:focus-visible, button:focus-visible, textarea:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+  .drop svg { width: 34px; height: 34px; color: var(--accent); margin-bottom: 10px; }
+  .drop strong { display: block; }
+  .drop span { color: var(--muted); font-size: .88rem; }
+  .drop.has-file { border-style: solid; border-color: var(--good); background: var(--good-soft); }
+  .drop.has-file svg { color: var(--good); }
+  .drop input { display: none; }
+
+  textarea {
+    width: 100%; min-height: 220px; resize: vertical; padding: 14px;
+    border: 1px solid var(--line); border-radius: 12px; background: #FAFBFD;
+    font: inherit; font-size: .93rem; color: var(--ink);
+  }
+  textarea:focus { border-color: var(--accent); background: #fff; }
+
+  .actions { display: flex; align-items: center; gap: 16px; margin-top: 20px; flex-wrap: wrap; }
+  button.primary {
+    background: var(--accent); color: #fff; border: 0; border-radius: 10px;
+    padding: 13px 26px; font: inherit; font-weight: 700; cursor: pointer;
+    transition: background .15s, transform .1s;
+  }
+  button.primary:hover { background: #2848C2; }
+  button.primary:active { transform: translateY(1px); }
+  button.primary:disabled { background: #AEB8DD; cursor: not-allowed; }
+  button.ghost { background: none; border: 1px solid var(--line); border-radius: 10px; padding: 11px 20px; font: inherit; font-weight: 600; color: var(--ink); cursor: pointer; }
+  button.ghost:hover { background: #fff; border-color: #C4CAD8; }
+  .error { color: var(--warn); font-size: .92rem; font-weight: 500; }
+
+  .spinner { display: none; width: 18px; height: 18px; border: 2.5px solid #C9D2F2; border-top-color: var(--accent); border-radius: 50%; animation: spin .7s linear infinite; }
+  .loading .spinner { display: inline-block; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Results */
+  #results { display: none; margin-top: 8px; }
+  .results-top { display: grid; grid-template-columns: 300px 1fr; gap: 20px; margin-bottom: 20px; }
+  @media (max-width: 760px) { .results-top { grid-template-columns: 1fr; } }
+
+  .score-card { text-align: center; }
+  .ring { position: relative; width: 190px; height: 190px; margin: 4px auto 12px; }
+  .ring svg { transform: rotate(-90deg); width: 100%; height: 100%; }
+  .ring .track { fill: none; stroke: #ECEFF5; stroke-width: 12; }
+  .ring .bar { fill: none; stroke: var(--accent); stroke-width: 12; stroke-linecap: round; stroke-dasharray: 0 999; transition: stroke-dasharray 1.1s cubic-bezier(.2,.8,.2,1); }
+  .ring .num { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .ring .num b { font-size: 3rem; line-height: 1; letter-spacing: -0.03em; }
+  .ring .num small { color: var(--muted); font-size: .85rem; margin-top: 4px; }
+  .verdict { font-weight: 700; margin: 0 0 4px; }
+  .verdict-sub { color: var(--muted); font-size: .88rem; margin: 0; }
+
+  .bd-row { margin-bottom: 14px; }
+  .bd-row:last-child { margin-bottom: 0; }
+  .bd-head { display: flex; justify-content: space-between; font-size: .9rem; font-weight: 600; margin-bottom: 6px; }
+  .bd-head span:last-child { color: var(--muted); font-weight: 500; }
+  .meter { height: 8px; background: #ECEFF5; border-radius: 99px; overflow: hidden; }
+  .meter i { display: block; height: 100%; width: 0; background: var(--accent); border-radius: 99px; transition: width .9s ease; }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip { padding: 5px 12px; border-radius: 99px; font-size: .85rem; font-weight: 600; }
+  .chip.ok { background: var(--good-soft); color: var(--good); }
+  .chip.miss { background: var(--warn-soft); color: var(--warn); }
+  .empty { color: var(--muted); font-size: .9rem; margin: 0; }
+  .sub { margin: 0 0 8px; font-size: .88rem; font-weight: 600; color: var(--muted); }
+  .sub + .chips { margin-bottom: 20px; }
+  .sub + .chips:last-child { margin-bottom: 0; }
+
+  .list { margin: 0; padding: 0; list-style: none; }
+  .list li { position: relative; padding: 10px 0 10px 22px; border-top: 1px solid var(--line); font-size: .94rem; }
+  .list li:first-child { border-top: 0; padding-top: 0; }
+  .list li::before { content: ""; position: absolute; left: 0; top: 17px; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
+  .list li:first-child::before { top: 7px; }
+  .list.good li::before { background: var(--good); }
+  .list.warn li::before { background: var(--warn); }
+
+  .stack > * + * { margin-top: 20px; }
+  .hidden { display: none !important; }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>RESUME ANALYZER 1</h1>
+    <p>Upload your resume and paste the job description. You'll get a score, the skills you're missing, and clear steps to improve.</p>
+  </header>
+
+  <!-- Input -->
+  <section id="input" class="panel" style="margin-top: 28px;">
+    <div class="grid-2">
+      <div>
+        <label class="field" for="file">Your resume</label>
+        <div class="drop" id="drop" tabindex="0" role="button" aria-label="Upload resume PDF">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4m0 0L7 9m5-5 5 5"/><path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+          <strong id="drop-title">Drop your PDF here</strong>
+          <span id="drop-sub">or click to browse</span>
+          <input type="file" id="file" accept="application/pdf,.pdf">
+        </div>
+      </div>
+      <div>
+        <label class="field" for="jd">Job description</label>
+        <textarea id="jd" placeholder="Paste the full job description here..."></textarea>
+      </div>
+    </div>
+    <div class="actions" id="actions">
+      <button class="primary" id="go">Analyze resume</button>
+      <span class="spinner" aria-hidden="true"></span>
+      <span class="error" id="error" role="alert"></span>
+    </div>
+  </section>
+
+  <!-- Results -->
+  <section id="results" aria-live="polite">
+    <div class="results-top">
+      <div class="panel score-card">
+        <h2>Overall score</h2>
+        <div class="ring">
+          <svg viewBox="0 0 120 120"><circle class="track" cx="60" cy="60" r="52"/><circle class="bar" id="bar" cx="60" cy="60" r="52"/></svg>
+          <div class="num"><b id="score">0</b><small id="score-label">out of 100</small></div>
+        </div>
+        <p class="verdict" id="verdict"></p>
+        <p class="verdict-sub" id="verdict-sub"></p>
+      </div>
+
+      <div class="panel" id="breakdown-panel">
+        <h2>Score breakdown</h2>
+        <div id="breakdown"></div>
+      </div>
+    </div>
+
+    <div class="grid-2" style="margin-bottom: 20px;">
+      <div class="panel">
+        <h2>Skills</h2>
+        <p class="sub">Already on your resume</p>
+        <div class="chips" id="matched"></div>
+        <p class="sub">Missing from your resume</p>
+        <div class="chips" id="missing"></div>
+      </div>
+      <div class="panel" id="strengths-panel">
+        <h2>What's working</h2>
+        <ul class="list good" id="strengths"></ul>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="panel" id="improve-panel">
+        <h2>What to improve</h2>
+        <ul class="list warn" id="improvements"></ul>
+      </div>
+      <div class="panel" id="reco-panel">
+        <h2>Recommendations</h2>
+        <ul class="list" id="recommendations"></ul>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="ghost" id="again">Analyze another resume</button>
+    </div>
+  </section>
+
+</div>
+
+<script>
+  // Change this if your backend runs somewhere else.
+  const API_URL = "http://127.0.0.1:8000/analyze";
+
+  const $ = (id) => document.getElementById(id);
+  const drop = $("drop"), fileInput = $("file");
+  let selectedFile = null;
+
+  /* ---------- File selection ---------- */
+  drop.addEventListener("click", () => fileInput.click());
+  drop.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); fileInput.click(); } });
+  fileInput.addEventListener("click", (e) => e.stopPropagation());
+  fileInput.addEventListener("change", () => setFile(fileInput.files[0]));
+  ["dragenter", "dragover"].forEach(t => drop.addEventListener(t, (e) => { e.preventDefault(); drop.classList.add("drag"); }));
+  ["dragleave", "drop"].forEach(t => drop.addEventListener(t, (e) => { e.preventDefault(); drop.classList.remove("drag"); }));
+  drop.addEventListener("drop", (e) => setFile(e.dataTransfer.files[0]));
+
+  function setFile(f) {
+    if (!f) return;
+    if (!f.name.toLowerCase().endsWith(".pdf")) { showError("Please upload a PDF file."); return; }
+    showError("");
+    selectedFile = f;
+    drop.classList.add("has-file");
+    $("drop-title").textContent = f.name;
+    $("drop-sub").textContent = (f.size / 1024).toFixed(0) + " KB. Click to replace.";
+  }
+
+  function showError(msg) { $("error").textContent = msg; }
+
+  /* ---------- Submit ---------- */
+  $("go").addEventListener("click", async () => {
+    const jd = $("jd").value.trim();
+    if (!selectedFile) return showError("Upload your resume as a PDF.");
+    if (jd.length < 40) return showError("Paste the full job description (at least a few lines).");
+    showError("");
+
+    const form = new FormData();
+    form.append("resume", selectedFile);
+    form.append("job_description", jd);
+
+    $("actions").classList.add("loading");
+    $("go").disabled = true;
+    try {
+      const res = await fetch(API_URL, { method: "POST", body: form });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.detail || "Something went wrong. Try again.");
+      render(data);
+    } catch (err) {
+      showError(err.message.includes("fetch") ? "Can't reach the server. Is uvicorn running?" : err.message);
+    } finally {
+      $("actions").classList.remove("loading");
+      $("go").disabled = false;
+    }
+  });
+
+  $("again").addEventListener("click", () => {
+    $("results").style.display = "none";
+    $("input").style.display = "";
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
+
+  /* ---------- Render ---------- */
+  function fillList(id, items) {
+    const ul = $(id);
+    ul.innerHTML = "";
+    items.forEach(t => { const li = document.createElement("li"); li.textContent = t; ul.appendChild(li); });
+  }
+  function fillChips(id, items, cls, emptyText) {
+    const box = $(id);
+    box.innerHTML = "";
+    if (!items.length) { const p = document.createElement("p"); p.className = "empty"; p.textContent = emptyText; box.appendChild(p); return; }
+    items.forEach(t => { const s = document.createElement("span"); s.className = "chip " + cls; s.textContent = t; box.appendChild(s); });
+  }
+  // Hide a whole panel if the backend didn't send that section yet.
+  function toggle(panelId, show) { $(panelId).classList.toggle("hidden", !show); }
+
+  function render(data) {
+    const skills = data.skills || { matched: [], missing: [], match_percentage: 0 };
+
+    // Until the scoring engine exists, fall back to the skills match %.
+    const hasScore = typeof data.score === "number";
+    const score = Math.round(hasScore ? data.score : skills.match_percentage);
+    $("score-label").textContent = hasScore ? "out of 100" : "skills match";
+
+    let verdict = "Needs work", sub = "Focus on the missing skills below before applying.";
+    if (score >= 80) { verdict = "Strong match"; sub = "You're well aligned with this role."; }
+    else if (score >= 60) { verdict = "Good match"; sub = "A few targeted edits will lift this."; }
+    else if (score >= 40) { verdict = "Partial match"; sub = "Close some skill gaps to improve your chances."; }
+    $("verdict").textContent = verdict;
+    $("verdict-sub").textContent = sub;
+
+    fillChips("matched", skills.matched || [], "ok", "No matching skills found.");
+    fillChips("missing", skills.missing || [], "miss", "Nothing missing. Nice.");
+
+    // Optional sections
+    const bd = data.breakdown || [];
+    toggle("breakdown-panel", bd.length > 0);
+    const bdBox = $("breakdown"); bdBox.innerHTML = "";
+    bd.forEach(r => {
+      const row = document.createElement("div"); row.className = "bd-row";
+      row.innerHTML = '<div class="bd-head"><span></span><span></span></div><div class="meter"><i></i></div>';
+      row.querySelector("span:first-child").textContent = r.label;
+      row.querySelector("span:last-child").textContent = r.score + " / " + r.max;
+      row.querySelector("i").dataset.w = Math.round((r.score / r.max) * 100);
+      bdBox.appendChild(row);
+    });
+
+    [["strengths", "strengths-panel"], ["improvements", "improve-panel"], ["recommendations", "reco-panel"]].forEach(([k, p]) => {
+      const arr = data[k] || [];
+      toggle(p, arr.length > 0);
+      fillList(k, arr);
+    });
+
+    $("input").style.display = "none";
+    $("results").style.display = "block";
+    window.scrollTo({ top: 0, behavior: "smooth" });
+
+    // Animate the ring, number and bars once.
+    const bar = $("bar"), circ = 2 * Math.PI * 52;
+    bar.style.strokeDasharray = "0 999";
+    $("score").textContent = "0";
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      bar.style.strokeDasharray = (circ * score / 100) + " 999";
+      document.querySelectorAll(".meter i").forEach(i => i.style.width = i.dataset.w + "%");
+      const start = performance.now();
+      (function tick(now) {
+        const t = Math.min((now - start) / 1000, 1);
+        $("score").textContent = Math.round(score * (1 - Math.pow(1 - t, 3)));
+        if (t < 1) requestAnimationFrame(tick);
+      })(start);
+    }));
+  }
+</script>
+</body>
+</html>
