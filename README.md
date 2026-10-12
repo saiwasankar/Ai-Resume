@@ -1,90 +1,144 @@
 # RESUME ANALYZER 1
 
-Upload your resume as a PDF, paste a job description, and get an instant analysis: an overall score out of 100, the skills you already match, the skills you're missing, and specific recommendations to improve your resume.
+Resume Analyzer is a web-based application that analyzes your resume against a target job description. Upload your resume as a PDF to receive an overall score out of 100, matched and missing skills, text similarity insights, and actionable recommendations to improve your resume.
 
-![Screenshot](screenshots/home.png)
-![Results](screenshots/results.png)
+![Home Page](screenshots/home.png)
+
+![Analysis Results](screenshots/results.png)
 
 ## Features
 
-- PDF resume upload with drag and drop
-- Overall score out of 100 with a category breakdown
-- Matched and missing skills compared against the job description
-- Strengths, areas to improve, and actionable recommendations
-- Runs fully offline with no paid APIs
+- **PDF Resume Upload:** Upload your resume using file browsing or drag and drop.
+- **Resume Match Score:** Get an overall score out of 100.
+- **Score Breakdown:** View your performance across different resume evaluation categories.
+- **Skill Gap Analysis:** Identify skills that match the job description and skills that may be missing.
+- **Text Similarity:** Compare resume content with the job description using TF-IDF text similarity.
+- **Personalized Feedback:** Receive recommendations to improve resume relevance.
+- **Modern User Interface:** Responsive lavender and purple-themed dashboard.
+- **Fast Analysis:** Analyze your resume and view results through a simple web interface.
 
-## How the score works
+## How the Score Works
 
-| Category | Points |
-|---|---|
-| Skills match | 40 |
-| Keyword relevance | 20 |
-| Experience | 20 |
-| Quantified achievements | 10 |
-| Resume structure | 10 |
+The application calculates a resume score using multiple evaluation categories. The exact weights depend on the scoring configuration implemented in `app/scorer.py`.
 
-## Tech stack
+The evaluation can include:
 
-- **Backend:** Python, FastAPI, pdfplumber
+- Skills match
+- Keyword relevance
+- Text similarity
+- Relevant experience
+- Quantified achievements
+- Resume structure
+
+The final score is intended to help users understand how closely their resume aligns with a particular job description.
+
+## Tech Stack
+
+- **Backend:** Python, FastAPI
 - **Frontend:** HTML, CSS, JavaScript
+- **PDF Processing:** pdfplumber
+- **Text Similarity:** scikit-learn and TF-IDF
+- **API Communication:** REST API using JSON responses and multipart form data
 
-## Project structure
+## Project Structure
 
-```
+```text
 resume-analyzer/
 ├── app/
-│   ├── main.py        # API endpoint and server
-│   ├── parser.py      # PDF to text
-│   ├── skills.py      # skill extraction and matching
-│   ├── scorer.py      # 100-point scoring
-│   └── feedback.py    # strengths, improvements, recommendations
+│   ├── main.py          # API endpoint and application setup
+│   ├── parser.py        # Extracts text from PDF resumes
+│   ├── skills.py        # Skill extraction and matching
+│   ├── scorer.py        # Calculates the resume score
+│   ├── feedback.py      # Generates feedback and recommendations
+│   └── semantic.py      # Text similarity comparison
 ├── frontend/
-│   └── index.html     # user interface
-├── requirements.txt
-└── README.md
+│   └── index.html       # Responsive web interface
+├── requirements.txt     # Python dependencies
+└── README.md            # Project documentation
 ```
 
-## Getting started
+## Getting Started
 
-**Requirements:** Python 3.10 or newer.
+### Requirements
+
+- Python installed on your system
+- Git
+- A modern web browser
+
+### 1. Clone the Repository
+
+Replace the example URL with your actual GitHub repository URL.
 
 ```bash
-# 1. Clone the repo
-git clone https://github.com/YOUR-USERNAME/resume-analyzer-1.git
+git clone https://github.com/suryaraoparth35/RESUME-ANALYZER-1
 cd resume-analyzer-1
-
-# 2. Create and activate a virtual environment
-python -m venv venv
-venv\Scripts\activate          # Mac/Linux: source venv/bin/activate
-
-# 3. Install dependencies
-pip install -r requirements.txt
-
-# 4. Start the server
-uvicorn app.main:app --reload
 ```
 
-Then open **http://127.0.0.1:8000** in your browser.
+### 2. Create a Virtual Environment
+
+```bash
+python -m venv venv
+```
+
+Activate it on Windows:
+
+```bash
+venv\Scripts\activate
+```
+
+On macOS or Linux:
+
+```bash
+source venv/bin/activate
+```
+
+### 3. Install Dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+### 4. Start the Application
+
+```bash
+python -m uvicorn app.main:app --reload
+```
+
+### 5. Open the Application
+
+Visit the following address in your browser:
+
+http://127.0.0.1:8000
 
 ## Usage
 
-1. Upload a text-based PDF resume (exported from Word or Google Docs).
-2. Paste the full job description.
-3. Click **Analyze resume** to see your score and feedback.
+1. Open the application in your browser.
+2. Upload your resume in PDF format.
+3. Paste the job description for the position you are targeting.
+4. Click **Analyze my resume**.
+5. Review your overall score, skills match, text similarity, and recommendations.
+6. Improve your resume based on the feedback and analyze it again.
 
-Scanned or image-only PDFs aren't supported yet.
+**Note:** The application currently supports text-based PDF resumes. Scanned or image-only PDFs may not be readable without OCR support.
 
 ## Roadmap
 
-- [ ] OCR support for scanned PDFs
-- [ ] Larger skills database for more job roles
-- [ ] Optional AI-written feedback
-- [ ] Downloadable report
+- [ ] OCR support for scanned PDF resumes
+- [ ] Expand the skills database for different job roles
+- [ ] Improve semantic similarity beyond TF-IDF
+- [ ] More detailed, role-specific recommendations
+- [ ] Downloadable analysis reports
+- [ ] Additional resume evaluation metrics
 
 ## Contributing
 
-Suggestions and pull requests are welcome. Open an issue to discuss what you'd like to change.
+Suggestions, bug reports, and contributions are welcome. Feel free to open an issue or submit a pull request to help improve the project.
 
 ## Author
 
-Built by **PARTH SHAILESH SURYARAO**. Connect with me on [LinkedIn](https://www.linkedin.com/in/parth-suryarao-342875315/).
+**Parth Shailesh Suryarao**
+
+Connect with me on [LinkedIn](https://www.linkedin.com/in/parth-suryarao-342875315/).
+
+---
+
