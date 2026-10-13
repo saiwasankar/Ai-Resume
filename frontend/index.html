@@ -1,322 +1,102 @@
-
-
 <!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#f8f6ff">
-<title>Careerly AI — Resume Analyzer</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Resume Analyzer</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#f8f7fc;--surface:#fff;--ink:#29243d;--muted:#817b95;--line:#eae5f3;--purple:#7957e8;--purple-dark:#5c3bc5;--purple-soft:#f0ebff;--green:#16875b;--green-soft:#e8f8ef;--orange:#a9681c;--orange-soft:#fff2df;--red:#b94158;--red-soft:#fff0f2;--radius:18px;--shadow:0 12px 35px rgba(56,35,104,.055)}
-*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:radial-gradient(ellipse at 8% 0%,#eee7ff 0,transparent 36%),var(--bg);color:var(--ink);font-family:"DM Sans",sans-serif;line-height:1.55;-webkit-font-smoothing:antialiased}button,input,textarea{font:inherit}button{cursor:pointer}
-.topbar{height:72px;padding:0 max(5%,calc((100% - 1160px)/2));display:flex;align-items:center;justify-content:space-between;background:#ffffffdf;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5;backdrop-filter:blur(14px)}
-.brand{display:flex;align-items:center;gap:10px;font:800 20px "Plus Jakarta Sans",sans-serif;letter-spacing:-.8px}.brand-mark{height:39px;width:39px;display:grid;place-items:center;color:white;border-radius:13px;background:linear-gradient(135deg,#a087ff,#6844d7);box-shadow:0 5px 15px #7957e833;font-size:21px}.brand-name span{color:var(--purple)}
-.nav-right{display:flex;align-items:center;gap:18px;color:var(--muted);font-size:12px}.pill{border-radius:99px;padding:8px 12px;background:var(--purple-soft);color:var(--purple-dark);font-weight:700}
-.container{width:min(1120px,91%);margin:auto}.hero{text-align:center;padding:52px 10px 34px}.eyebrow{display:inline-flex;align-items:center;gap:7px;border:1px solid #e5dcff;border-radius:99px;padding:8px 13px;background:#ffffffbd;color:var(--purple-dark);font-size:11px;font-weight:700;letter-spacing:.4px}
-h1{font:800 clamp(32px,4.8vw,51px)/1.16 "Plus Jakarta Sans",sans-serif;letter-spacing:-1.9px;margin:19px 0 14px}.gradient{background:linear-gradient(100deg,#7957e8,#bd68d6);color:transparent;background-clip:text;-webkit-background-clip:text}.hero p{max-width:620px;margin:auto;color:var(--muted);font-size:14px;line-height:1.85}.features{display:flex;justify-content:center;flex-wrap:wrap;gap:19px;margin-top:20px;color:#625c78;font-size:12px}.features span:before{content:"✓";color:var(--green);font-weight:800;margin-right:6px}
-.layout{display:grid;grid-template-columns:1fr 1fr;gap:22px;align-items:start;padding-bottom:54px}.card{min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow)}.heading{display:flex;align-items:center;gap:12px;margin-bottom:23px}.heading-icon{width:43px;height:43px;display:grid;place-items:center;border-radius:13px;background:var(--purple-soft);font-size:20px}.heading h2,.result-heading h2{font:700 16px "Plus Jakarta Sans",sans-serif;margin:0 0 4px}.subheading{font-size:12px;color:var(--muted)}
-.field-label{display:block;font-size:12px;font-weight:700;margin:20px 0 10px}.drop{min-height:188px;padding:23px 14px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;border:1.5px dashed #c9baf3;border-radius:15px;background:#fbf9ff;cursor:pointer;transition:.2s}.drop:hover,.drop.drag{background:#f2edff;border-color:var(--purple)}.drop.has-file{border-style:solid;border-color:var(--green);background:var(--green-soft)}.upload-icon{width:49px;height:49px;display:grid;place-items:center;border-radius:15px;background:#eee7ff;color:var(--purple);font-size:24px;margin-bottom:12px}.drop strong{font-size:13px;max-width:100%;overflow-wrap:anywhere}.drop p{font-size:11px;color:var(--muted);margin:7px 0 13px}.browse{border:1px solid #ddd2f7;background:white;color:var(--purple-dark);border-radius:9px;padding:8px 13px;font-size:11px;font-weight:700;cursor:pointer}.drop input{display:none}.file-meta{margin-top:9px;font-size:11px;color:var(--green);overflow-wrap:anywhere}
-.label-row{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:22px 0 9px}.label-row .field-label{margin:0}.counter{font-size:10px;color:var(--muted)}textarea{width:100%;min-height:190px;resize:vertical;border:1px solid var(--line);border-radius:12px;padding:13px;background:#fdfcff;color:var(--ink);font:12px/1.8 "DM Sans",sans-serif;outline:none}textarea:focus{border-color:#a58beb;box-shadow:0 0 0 3px #7957e815;background:white}textarea::placeholder{color:#aaa5b9}
-.primary{width:100%;display:flex;align-items:center;justify-content:center;gap:9px;margin-top:18px;padding:14px 18px;border:0;border-radius:12px;background:linear-gradient(100deg,#8969ef,#6845d3);color:white;font-size:13px;font-weight:700;box-shadow:0 8px 18px #7957e82d;transition:.2s}.primary:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 11px 23px #7957e83d}.primary:disabled{opacity:.65;cursor:wait;transform:none}.privacy{text-align:center;color:var(--muted);font-size:10px;margin:12px 0 0}.error{display:none;padding:11px 13px;border-radius:10px;background:var(--red-soft);color:var(--red);font-size:12px;line-height:1.6;margin-bottom:13px;overflow-wrap:anywhere}.error.show{display:block}
-.empty-state{min-height:440px;display:flex;align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:25px}.empty-art{width:108px;height:108px;display:grid;place-items:center;border-radius:32px;background:linear-gradient(145deg,#f2edff,#e7ddff);font-size:46px;margin-bottom:22px;box-shadow:inset 0 0 0 1px #fff}.empty-state h2{font:700 17px "Plus Jakarta Sans",sans-serif;margin:0 0 9px}.empty-state>p{max-width:275px;color:var(--muted);font-size:12px;line-height:1.8;margin:0}.steps{display:grid;gap:12px;text-align:left;margin-top:20px;font-size:11px;color:#625c78}.steps span:before{content:"✦";color:var(--purple);margin-right:9px}
-#results{display:none}#results.show{display:block}.result-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:17px}.result-heading h2{margin:0}.status-pill{background:var(--green-soft);color:var(--green);font-size:10px;font-weight:700;padding:7px 10px;border-radius:99px;white-space:nowrap}
-.score-box{display:flex;align-items:center;gap:18px;padding:18px;border:1px solid #e7ddff;border-radius:15px;background:linear-gradient(135deg,#f4efff,#fcfaff)}.ring{--score:0;width:110px;height:110px;flex-shrink:0;display:grid;place-items:center;position:relative;border-radius:50%;background:conic-gradient(var(--purple) calc(var(--score)*1%),#e5def6 0)}.ring:before{content:"";position:absolute;inset:8px;border-radius:50%;background:#f8f4ff}.ring-inner{position:relative;text-align:center}.ring-inner strong{display:block;font:800 29px "Plus Jakarta Sans",sans-serif;letter-spacing:-1px}.ring-inner small{font-size:10px;color:var(--muted)}.score-copy h3{font:700 14px "Plus Jakarta Sans",sans-serif;margin:0 0 7px}.score-copy p{font-size:11px;color:var(--muted);line-height:1.7;margin:0}
-.metrics{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin:15px 0 22px}.metric{border:1px solid var(--line);border-radius:12px;padding:13px}.metric-label{font-size:10px;color:var(--muted);margin-bottom:8px}.metric-value{font:800 22px "Plus Jakarta Sans",sans-serif}.track{height:5px;background:#eeeaf6;border-radius:99px;overflow:hidden;margin-top:9px}.fill{height:100%;width:0;background:linear-gradient(90deg,#b49cff,#7956e8);border-radius:inherit;transition:width .6s}
-.section-title{font:700 13px "Plus Jakarta Sans",sans-serif;margin:22px 0 13px}.breakdown{display:grid;gap:14px}.bd-row{min-width:0}.bd-head{display:flex;justify-content:space-between;gap:10px;font-size:11px;font-weight:600;margin-bottom:7px}.bd-head span:last-child{color:var(--muted);font-weight:500}.meter{height:7px;border-radius:99px;background:#eeeaf5;overflow:hidden}.meter i{display:block;height:100%;width:0;background:linear-gradient(90deg,#a991ff,#7956e8);border-radius:inherit;transition:width .7s}
-.skills{display:grid;grid-template-columns:1fr 1fr;gap:10px}.skill-box{border:1px solid var(--line);border-radius:12px;padding:12px;min-width:0}.skill-heading{font-size:11px;font-weight:700;margin-bottom:11px}.chips{display:flex;flex-wrap:wrap;gap:6px}.chip{background:var(--green-soft);color:#176b4b;border-radius:7px;padding:6px 8px;font-size:10px;overflow-wrap:anywhere}.missing .chip{background:var(--orange-soft);color:var(--orange)}.empty-text{font-size:11px;color:var(--muted);margin:0;line-height:1.6}
-.list{list-style:none;padding:0;margin:0}.list li{position:relative;padding:10px 0 10px 19px;border-top:1px solid var(--line);font-size:11px;line-height:1.7;overflow-wrap:anywhere}.list li:first-child{border-top:0;padding-top:0}.list li:before{content:"";position:absolute;left:0;top:16px;width:7px;height:7px;border-radius:50%;background:var(--purple)}.list li:first-child:before{top:5px}.list.good li:before{background:var(--green)}.list.warn li:before{background:#d58a37}.hidden{display:none!important}
-footer{text-align:center;padding:23px 12px;border-top:1px solid var(--line);font-size:11px;color:var(--muted)}footer strong{color:var(--purple-dark)}.spinner{display:none;width:15px;height:15px;border:2px solid #ffffff70;border-top-color:white;border-radius:50%;animation:spin .7s linear infinite}.loading .spinner{display:inline-block}@keyframes spin{to{transform:rotate(360deg)}}
-@media(max-width:800px){.layout{grid-template-columns:1fr}.empty-state{min-height:310px}.hero{padding-top:38px}}
-@media(max-width:520px){.topbar{height:65px;padding:0 4%}.brand{font-size:18px}.brand-mark{width:35px;height:35px}.nav-right{font-size:10px;gap:8px}.container{width:93%}.hero{padding:35px 0 25px}h1{letter-spacing:-1.2px}.features{gap:10px}.card{padding:17px}.score-box{gap:12px;padding:12px}.ring{width:88px;height:88px}.ring-inner strong{font-size:24px}.skills{grid-template-columns:1fr}}
-@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
-</style>
-</head>
-<body>
-<header class="topbar">
-  <div class="brand"><div class="brand-mark">✦</div><div class="brand-name">Careerly<span>AI</span></div></div>
-  <div class="nav-right"><span>Career tools</span><span class="pill">✦ AI-powered</span></div>
-</header>
+:root{--p:#7c3aed;--p2:#a78bfa;--ink:#1e1b4b;--mut:#6b6890;--card:rgba(255,255,255,.78);--bd:rgba(124,58,237,.14);--ok:#059669;--bad:#e11d48;--warn:#d97706}
+*{box-sizing:border-box;margin:0}
+body{font-family:'Plus Jakarta Sans',system-ui,sans-serif;color:var(--ink);min-height:100vh;
+background:radial-gradient(900px 500px at 10% -10%,#ddd0ff,transparent),radial-gradient(700px 500px at 100% 0,#fbcfe8,transparent),#f6f2ff}
+.wrap{max-width:1040px;margin:0 auto;padding:28px 20px 80px}
+nav{display:flex;align-items:center;gap:10px;font-weight:800}
+.logo{width:36px;height:36px;border-radius:11px;background:linear-gradient(135deg,var(--p),#ec4899);display:grid;place-items:center;color:#fff}
+.hero{text-align:center;margin:46px 0 34px}
+.hero h1{font-size:clamp(2rem,5vw,3.4rem);font-weight:800;line-height:1.1;letter-spacing:-.03em}
+.hero h1 span{background:linear-gradient(90deg,var(--p),#ec4899);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero p{color:var(--mut);margin:14px auto 0;max-width:560px;line-height:1.6}
+.card{background:var(--card);backdrop-filter:blur(14px);border:1px solid var(--bd);border-radius:22px;padding:24px;box-shadow:0 18px 50px -24px rgba(124,58,237,.35)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+@media(max-width:760px){.grid{grid-template-columns:1fr}}
+h3{font-size:.8rem;text-transform:uppercase;letter-spacing:.1em;color:var(--mut);margin-bottom:12px}
+#drop{border:2px dashed var(--p2);border-radius:16px;min-height:190px;display:grid;place-items:center;text-align:center;padding:20px;cursor:pointer;transition:.2s;background:rgba(255,255,255,.5)}
+#drop:hover,#drop.on{background:#efe8ff;transform:translateY(-2px)}
+#drop b{display:block;font-size:1.05rem;margin:6px 0 4px}#drop small{color:var(--mut)}
+.ico{font-size:2.2rem}
+textarea{width:100%;height:190px;border:1px solid var(--bd);border-radius:16px;padding:14px;font:inherit;font-size:.92rem;resize:vertical;background:rgba(255,255,255,.7);color:var(--ink)}
+textarea:focus{outline:2px solid var(--p2)}
+.btn{display:block;width:100%;margin-top:18px;border:0;border-radius:16px;padding:16px;font:inherit;font-weight:700;font-size:1.05rem;color:#fff;cursor:pointer;background:linear-gradient(90deg,var(--p),#ec4899);box-shadow:0 12px 28px -10px var(--p);transition:.2s}
+.btn:hover:not(:disabled){transform:translateY(-2px)}.btn:disabled{opacity:.45;cursor:not-allowed}
+.err{display:none;margin-top:14px;padding:12px 16px;border-radius:12px;background:#ffe4e6;color:#9f1239;font-weight:500}
+#res{display:none;margin-top:34px}
+.top{display:grid;grid-template-columns:260px 1fr;gap:18px;margin-bottom:18px}
+@media(max-width:760px){.top{grid-template-columns:1fr}}
+.ring{position:relative;width:170px;height:170px;margin:0 auto}
+.ring svg{transform:rotate(-90deg)}.ring circle{fill:none;stroke-width:12;stroke-linecap:round}
+.ring .bg{stroke:#e9e2ff}.ring .fg{stroke:url(#g);transition:stroke-dashoffset 1.4s cubic-bezier(.2,.8,.2,1)}
+.ring div{position:absolute;inset:0;display:grid;place-content:center;text-align:center}
+.ring strong{font-size:3rem;font-weight:800;line-height:1}.ring span{font-size:.75rem;color:var(--mut)}
+.verdict{text-align:center;margin-top:12px;font-weight:800;font-size:1.1rem}
+.bar{margin-bottom:14px}.bar div.l{display:flex;justify-content:space-between;font-size:.88rem;font-weight:600;margin-bottom:6px}
+.track{height:10px;background:#ece6ff;border-radius:9px;overflow:hidden}.fill{height:100%;width:0;border-radius:9px;background:linear-gradient(90deg,var(--p),#ec4899);transition:width 1.2s cubic-bezier(.2,.8,.2,1)}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.chip{padding:6px 12px;border-radius:99px;font-size:.82rem;font-weight:600}
+.chip.ok{background:#d1fae5;color:#065f46}.chip.bad{background:#ffe4e6;color:#9f1239}.chip.neu{background:#ede9fe;color:#5b21b6}
+.rec{display:flex;gap:14px;padding:18px;border-radius:16px;background:rgba(255,255,255,.7);border:1px solid var(--bd);margin-bottom:12px;animation:up .5s both}
+.rec i{flex:none;width:6px;border-radius:6px}.High i{background:var(--bad)}.Medium i{background:var(--warn)}.Low i{background:var(--ok)}
+.tag{font-size:.7rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--mut)}
+.rec h4{margin:4px 0 6px;font-size:1.02rem}.rec p{color:var(--mut);font-size:.9rem;line-height:1.55}
+.rec blockquote{margin-top:10px;padding:8px 12px;border-left:3px solid var(--p2);background:#f5f0ff;border-radius:0 10px 10px 0;font-size:.85rem;font-style:italic}
+.pill{float:right;font-size:.7rem;font-weight:800;padding:3px 10px;border-radius:99px;background:#ede9fe;color:var(--p)}
+.spin{display:none;text-align:center;margin-top:22px;color:var(--mut);font-weight:600}
+.spin::before{content:"";display:block;width:34px;height:34px;margin:0 auto 10px;border:4px solid #e0d6ff;border-top-color:var(--p);border-radius:50%;animation:r .8s linear infinite}
+@keyframes r{to{transform:rotate(360deg)}}@keyframes up{from{opacity:0;transform:translateY(14px)}}
+.again{margin-top:10px;background:none;border:2px solid var(--p2);color:var(--p);box-shadow:none}
+</style></head><body><div class="wrap">
+<nav><div class="logo">✦</div>Resume Analyzer</nav>
+<section class="hero"><h1>Make your resume <span>impossible to ignore</span></h1>
+<p>Upload your resume, paste the job you want, and get a match score with advice written for <em>your</em> resume — not generic tips.</p></section>
 
-<main class="container">
-  <section class="hero">
-    <div class="eyebrow">✦ YOUR NEXT CAREER MOVE STARTS HERE</div>
-    <h1>Make your resume <span class="gradient">stand out.</span></h1>
-    <p>Discover your strengths, uncover skill gaps, and see how well your resume aligns with your dream job.</p>
-    <div class="features"><span>Instant analysis</span><span>Skill gap insights</span><span>Actionable feedback</span></div>
-  </section>
+<section class="card" id="form"><div class="grid">
+<div><h3>1 · Your resume</h3>
+<div id="drop"><div><div class="ico">📄</div><b id="fname">Drop your PDF here</b><small id="fsub">or click to browse · max 5 MB</small></div></div>
+<input type="file" id="file" accept="application/pdf" hidden></div>
+<div><h3>2 · Job description</h3><textarea id="jd" placeholder="Paste the full job posting here…"></textarea></div></div>
+<button class="btn" id="go" disabled>Analyze my resume</button>
+<div class="err" id="err"></div><div class="spin" id="spin">Reading your resume and comparing it to the job…</div></section>
 
-  <section class="layout">
-    <section class="card" id="inputCard">
-      <div class="heading"><div class="heading-icon">📄</div><div><h2>Analyze your resume</h2><div class="subheading">Upload your PDF and add a target job</div></div></div>
-      <div id="error" class="error" role="alert" aria-live="polite"></div>
-      <form id="analyzeForm">
-        <label class="field-label" for="resume">01 — Upload your resume</label>
-        <div class="drop" id="drop" tabindex="0" role="button" aria-label="Choose a PDF resume">
-          <div class="upload-icon">☁️</div>
-          <strong id="dropTitle">Drop your resume here</strong>
-          <p id="dropSub">PDF format · Maximum 10 MB</p>
-          <label class="browse" for="resume">Browse files</label>
-          <input type="file" id="resume" accept=".pdf,application/pdf">
-        </div>
-        <div class="file-meta" id="fileMeta" aria-live="polite"></div>
-        <div class="label-row"><label class="field-label" for="jobDescription">02 — Job description</label><span class="counter" id="counter">0 characters</span></div>
-        <textarea id="jobDescription" name="job_description" placeholder="Paste the job description here…&#10;&#10;Example: We are looking for a Python developer with experience in machine learning, SQL, APIs and problem solving." required></textarea>
-        <button class="primary" id="analyzeButton" type="submit"><span class="spinner"></span><span id="buttonText">✦ Analyze my resume →</span></button>
-        <p class="privacy">Your resume is sent to your analysis server for processing.</p>
-      </form>
-    </section>
-
-    <section class="card empty-state" id="emptyState">
-      <div class="empty-art">✨</div>
-      <h2>Your career insights await</h2>
-      <p>Upload your resume and add a job description to see your personalized report.</p>
-      <div class="steps"><span>Upload your PDF resume</span><span>Paste your target job description</span><span>Explore your score and skill gaps</span></div>
-    </section>
-
-    <section id="results" aria-live="polite">
-      <div class="card">
-        <div class="result-heading"><h2>Your resume report</h2><span class="status-pill">✓ Analysis complete</span></div>
-        <div class="score-box"><div class="ring" id="scoreRing"><div class="ring-inner"><strong id="score">0</strong><small id="scoreLabel">out of 100</small></div></div><div class="score-copy"><h3 id="verdict">Your match report</h3><p id="verdictSub">Your results will appear here.</p></div></div>
-        <div class="metrics">
-          <div class="metric"><div class="metric-label">Skills match</div><div class="metric-value" id="skillMetric">0%</div><div class="track"><div class="fill" id="skillFill"></div></div></div>
-          <div class="metric"><div class="metric-label">Text similarity</div><div class="metric-value" id="similarityMetric">—</div><div class="track"><div class="fill" id="similarityFill"></div></div></div>
-        </div>
-        <div id="breakdownPanel"><h3 class="section-title">Score breakdown</h3><div class="breakdown" id="breakdown"></div></div>
-      </div>
-      <div class="card" style="margin-top:16px">
-        <h3 class="section-title" style="margin-top:0">Your skill gap analysis</h3>
-        <div class="skills"><div class="skill-box"><div class="skill-heading">✓ Matched skills</div><div class="chips" id="matched"></div></div><div class="skill-box missing"><div class="skill-heading">＋ Skills to develop</div><div class="chips" id="missing"></div></div></div>
-      </div>
-      <div class="card" id="feedbackCard" style="margin-top:16px"><h3 class="section-title" style="margin-top:0">Personalized recommendations</h3><ul class="list" id="feedback"></ul></div>
-      <button class="primary" id="again" type="button">↻ Analyze another resume</button>
-    </section>
-  </section>
-</main>
-<footer>Built with ✦ <strong>Careerly AI</strong> · Make your next career move count.</footer>
-
+<section id="res">
+<div class="top"><div class="card"><div class="ring"><svg width="170" height="170" viewBox="0 0 120 120"><defs><linearGradient id="g"><stop offset="0" stop-color="#7c3aed"/><stop offset="1" stop-color="#ec4899"/></linearGradient></defs>
+<circle class="bg" cx="60" cy="60" r="54"/><circle class="fg" id="fg" cx="60" cy="60" r="54" stroke-dasharray="339.3" stroke-dashoffset="339.3"/></svg>
+<div><strong id="score">0</strong><span>out of 100</span></div></div><div class="verdict" id="verdict"></div></div>
+<div class="card"><h3>Score breakdown</h3><div id="bars"></div></div></div>
+<div class="card" style="margin-bottom:18px"><h3>Skills in this job</h3>
+<p class="tag" style="margin-bottom:8px">✓ You have</p><div class="chips" id="matched"></div>
+<p class="tag" style="margin-bottom:8px">✗ Missing</p><div class="chips" id="missing"></div>
+<p class="tag" style="margin-bottom:8px">Also on your resume</p><div class="chips" id="extra"></div></div>
+<h3 style="margin:26px 0 12px">Your personalised recommendations</h3><div id="recs"></div>
+<button class="btn again" id="again">↻ Analyze another resume</button></section></div>
 <script>
-/* This matches your existing FastAPI route. If deployed, change this URL to your backend URL. */
-const API_URL = "/analyze";
-const $ = id => document.getElementById(id);
-const fileInput = $("resume");
-const drop = $("drop");
-let selectedFile = null;
-
-function showError(message) {
-  const box = $("error");
-  box.textContent = message;
-  box.classList.toggle("show", Boolean(message));
-}
-function setFile(file) {
-  if (!file) return;
-  showError("");
-  if (!file.name.toLowerCase().endsWith(".pdf")) {
-    selectedFile = null;
-    fileInput.value = "";
-    $("dropTitle").textContent = "Drop your resume here";
-    $("fileMeta").textContent = "";
-    drop.classList.remove("has-file");
-    showError("Please choose a PDF file.");
-    return;
-  }
-  if (file.size > 10 * 1024 * 1024) {
-    selectedFile = null;
-    fileInput.value = "";
-    $("fileMeta").textContent = "";
-    drop.classList.remove("has-file");
-    showError("This PDF is larger than 10 MB. Please choose a smaller file.");
-    return;
-  }
-  selectedFile = file;
-  $("dropTitle").textContent = file.name;
-  $("dropSub").textContent = "Click Browse files to replace it";
-  $("fileMeta").textContent = "✓ Ready · " + (file.size / 1024).toFixed(0) + " KB";
-  drop.classList.add("has-file");
-}
-drop.addEventListener("click", event => {
-  if (event.target.closest("label")) return;
-  fileInput.click();
-});
-drop.addEventListener("keydown", event => {
-  if (event.key === "Enter" || event.key === " ") {
-    event.preventDefault();
-    fileInput.click();
-  }
-});
-fileInput.addEventListener("change", () => setFile(fileInput.files[0]));
-["dragenter","dragover"].forEach(type => drop.addEventListener(type, event => {
-  event.preventDefault(); drop.classList.add("drag");
-}));
-["dragleave","drop"].forEach(type => drop.addEventListener(type, event => {
-  event.preventDefault(); drop.classList.remove("drag");
-}));
-drop.addEventListener("drop", event => {
-  const file = event.dataTransfer.files[0];
-  if (!file) return;
-  try {
-    const transfer = new DataTransfer();
-    transfer.items.add(file);
-    fileInput.files = transfer.files;
-  } catch (_) {}
-  setFile(file);
-});
-$("jobDescription").addEventListener("input", () => {
-  $("counter").textContent = $("jobDescription").value.length + " characters";
-});
-
-$("analyzeForm").addEventListener("submit", async event => {
-  event.preventDefault();
-  showError("");
-  const jobDescription = $("jobDescription").value.trim();
-  if (!selectedFile) { showError("Please upload your resume as a PDF first."); return; }
-  if (jobDescription.length < 40) { showError("Please paste a fuller job description (at least 40 characters)."); return; }
-
-  const formData = new FormData();
-  formData.append("resume", selectedFile);
-  formData.append("job_description", jobDescription);
-  $("analyzeButton").disabled = true;
-  $("analyzeButton").classList.add("loading");
-  $("buttonText").textContent = "Analyzing your resume…";
-
-  try {
-    const response = await fetch(API_URL, { method: "POST", body: formData });
-    const data = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(data.detail || "Analysis failed. Please try again.");
-    renderResults(data);
-  } catch (error) {
-    if (error instanceof TypeError) {
-      showError("Could not connect to the backend. Start your server with: python -m uvicorn app.main:app --reload");
-    } else {
-      showError(error.message || "Something went wrong. Please try again.");
-    }
-  } finally {
-    $("analyzeButton").disabled = false;
-    $("analyzeButton").classList.remove("loading");
-    $("buttonText").textContent = "✦ Analyze my resume →";
-  }
-});
-
-function firstArray(...values) {
-  for (const value of values) if (Array.isArray(value)) return value;
-  return [];
-}
-function cleanItems(items) {
-  return items.map(item => typeof item === "string" ? item : (item && (item.text || item.message || item.suggestion || item.title)) || "").filter(Boolean);
-}
-function addChips(id, items, emptyText) {
-  const box = $(id);
-  box.replaceChildren();
-  items = cleanItems(items);
-  if (!items.length) {
-    const p = document.createElement("p");
-    p.className = "empty-text";
-    p.textContent = emptyText;
-    box.appendChild(p);
-    return;
-  }
-  items.forEach(item => {
-    const span = document.createElement("span");
-    span.className = "chip";
-    span.textContent = item;
-    box.appendChild(span);
-  });
-}
-function addList(id, items, fallback) {
-  const list = $(id);
-  list.replaceChildren();
-  items = cleanItems(items);
-  if (!items.length && fallback) items = [fallback];
-  items.forEach(item => {
-    const li = document.createElement("li");
-    li.textContent = item;
-    list.appendChild(li);
-  });
-}
-function renderResults(data) {
-  const skills = data.skills || {};
-  const score = Math.max(0, Math.min(100, Number(data.score ?? 0) || 0));
-  const breakdown = Array.isArray(data.breakdown) ? data.breakdown : [];
-  const matched = firstArray(skills.matched, skills.matched_skills, skills.found);
-  const missing = firstArray(skills.missing, skills.missing_skills, skills.not_found);
-  const similarity = data.text_comparison && Number(data.text_comparison.tfidf_similarity);
-
-  $("score").textContent = Math.round(score);
-  $("scoreRing").style.setProperty("--score", score);
-  $("skillMetric").textContent = Math.round(Number(skills.match_percentage) || 0) + "%";
-  $("skillFill").style.width = Math.max(0, Math.min(100, Number(skills.match_percentage) || 0)) + "%";
-
-  if (data.text_comparison && Number.isFinite(similarity)) {
-    $("similarityMetric").textContent = Math.round(similarity) + "%";
-    $("similarityFill").style.width = Math.max(0, Math.min(100, similarity)) + "%";
-  } else {
-    $("similarityMetric").textContent = "—";
-    $("similarityFill").style.width = "0%";
-  }
-
-  let verdict = "Room to improve";
-  let description = "Review the skill gaps and suggestions below to strengthen your resume.";
-  if (score >= 80) { verdict = "Strong resume match"; description = "Your resume aligns well with this job description. Review the suggestions for final improvements."; }
-  else if (score >= 60) { verdict = "Good starting match"; description = "A few targeted changes may make your resume more relevant to this role."; }
-  else if (score >= 40) { verdict = "Partial match"; description = "Focus on relevant skills and clearer evidence of your experience."; }
-  $("verdict").textContent = verdict;
-  $("verdictSub").textContent = description;
-
-  const breakdownBox = $("breakdown");
-  breakdownBox.replaceChildren();
-  $("breakdownPanel").classList.toggle("hidden", breakdown.length === 0);
-  breakdown.forEach(item => {
-    const row = document.createElement("div");
-    row.className = "bd-row";
-    const head = document.createElement("div");
-    head.className = "bd-head";
-    const label = document.createElement("span");
-    label.textContent = item.label || "Category";
-    const value = document.createElement("span");
-    value.textContent = `${item.score ?? 0} / ${item.max ?? 0}`;
-    head.append(label, value);
-    const meter = document.createElement("div");
-    meter.className = "meter";
-    const fill = document.createElement("i");
-    const max = Number(item.max) || 0;
-    const points = Number(item.score) || 0;
-    fill.style.width = (max > 0 ? Math.max(0, Math.min(100, points / max * 100)) : 0) + "%";
-    meter.appendChild(fill);
-    row.append(head, meter);
-    breakdownBox.appendChild(row);
-  });
-
-  addChips("matched", matched, "No matching skills were detected.");
-  addChips("missing", missing, "No missing skills were reported.");
-  const feedbackItems = firstArray(data.recommendations, data.improvements, data.feedback, data.suggestions);
-  addList("feedback", feedbackItems, "Review the missing skills and make sure your resume includes relevant projects, experience, and measurable outcomes.");
-  $("inputCard").classList.add("hidden");
-  $("emptyState").classList.add("hidden");
-  $("results").classList.add("show");
-  window.scrollTo({ top: 0, behavior: "smooth" });
-}
-$("again").addEventListener("click", () => {
-  $("results").classList.remove("show");
-  $("inputCard").classList.remove("hidden");
-  $("emptyState").classList.remove("hidden");
-  $("analyzeForm").reset();
-  selectedFile = null;
-  $("dropTitle").textContent = "Drop your resume here";
-  $("dropSub").textContent = "PDF format · Maximum 10 MB";
-  $("fileMeta").textContent = "";
-  drop.classList.remove("has-file");
-  $("counter").textContent = "0 characters";
-  showError("");
-  window.scrollTo({ top: 0, behavior: "smooth" });
-});
-</script>
-</body>
-</html>
-'''
-
-path = Path("/mnt/data/index.html")
-path.write_text(html, encoding="utf-8")
-print(f"Created {path} ({path.stat().st_size} bytes)")
+const $=s=>document.querySelector(s),esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let file=null;const drop=$('#drop'),inp=$('#file');
+const ready=()=>$('#go').disabled=!(file&&$('#jd').value.trim().length>=30);
+function pick(f){if(!f)return;if(!/\.pdf$/i.test(f.name))return showErr('Please choose a PDF file.');file=f;$('#fname').textContent='✅ '+f.name;$('#fsub').textContent=(f.size/1024).toFixed(0)+' KB · click to replace';$('#err').style.display='none';ready()}
+drop.onclick=()=>inp.click();inp.onchange=()=>pick(inp.files[0]);
+['dragover','dragenter'].forEach(e=>drop.addEventListener(e,x=>{x.preventDefault();drop.classList.add('on')}));
+['dragleave','drop'].forEach(e=>drop.addEventListener(e,x=>{x.preventDefault();drop.classList.remove('on')}));
+drop.addEventListener('drop',e=>pick(e.dataTransfer.files[0]));$('#jd').oninput=ready;
+function showErr(m){const e=$('#err');e.textContent=m;e.style.display='block'}
+const chips=(id,a,c,empty)=>$(id).innerHTML=a.length?a.map(s=>`<span class="chip ${c}">${esc(s)}</span>`).join(''):`<span class="tag">${empty}</span>`;
+$('#go').onclick=async()=>{const fd=new FormData();fd.append('resume',file);fd.append('job_description',$('#jd').value);
+$('#go').disabled=true;$('#err').style.display='none';$('#spin').style.display='block';
+try{const r=await fetch('/analyze',{method:'POST',body:fd}),d=await r.json();if(!r.ok)throw new Error(d.detail||'Something went wrong.');render(d)}
+catch(e){showErr(e.message)}finally{$('#spin').style.display='none';ready()}};
+function render(d){$('#form').style.display='none';$('#res').style.display='block';scrollTo({top:0,behavior:'smooth'});
+$('#verdict').textContent=d.verdict+' · '+d.similarity+'% text similarity';
+let n=0;const t=setInterval(()=>{n=Math.min(n+2,d.score);$('#score').textContent=n;if(n>=d.score)clearInterval(t)},18);
+requestAnimationFrame(()=>$('#fg').style.strokeDashoffset=339.3*(1-d.score/100));
+$('#bars').innerHTML=d.breakdown.map(b=>`<div class="bar"><div class="l"><span>${esc(b.name)}</span><span>${b.score} / ${b.max}</span></div><div class="track"><div class="fill" data-w="${b.score/b.max*100}"></div></div></div>`).join('');
+setTimeout(()=>document.querySelectorAll('.fill').forEach(f=>f.style.width=f.dataset.w+'%'),80);
+chips('#matched',d.matched,'ok','No direct matches found');chips('#missing',d.missing,'bad','Nothing missing 🎉');chips('#extra',d.extra,'neu','None detected');
+$('#recs').innerHTML=d.recommendations.map((r,i)=>`<div class="rec ${r.priority}" style="animation-delay:${i*70}ms"><i></i><div style="flex:1"><span class="pill">${r.priority} priority</span><span class="tag">${esc(r.category)}</span><h4>${esc(r.title)}</h4><p>${esc(r.detail)}</p>${r.evidence?`<blockquote>“${esc(r.evidence)}”</blockquote>`:''}</div></div>`).join('')||'<div class="card">Great news — nothing major to fix.</div>'}
+$('#again').onclick=()=>{$('#res').style.display='none';$('#form').style.display='block';file=null;inp.value='';$('#fname').textContent='Drop your PDF here';$('#fsub').textContent='or click to browse · max 5 MB';$('#fg').style.strokeDashoffset=339.3;ready();scrollTo({top:0,behavior:'smooth'})};
+</script></body></html>

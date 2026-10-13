@@ -9,7 +9,7 @@ from fastapi.responses import FileResponse
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
-from .feedback import SECTIONS, _years_covered, generate_recommendations
+from .feedback import SECTIONS, _jd_terms, _years_covered, generate_recommendations
 
 app = FastAPI(title="Resume Analyzer")
 INDEX = Path(__file__).resolve().parent.parent / "frontend" / "index.html"
@@ -18,12 +18,29 @@ SKILLS = """python,java,javascript,typescript,c++,c#,golang,rust,sql,nosql,html,
 django,flask,fastapi,spring boot,docker,kubernetes,aws,azure,gcp,terraform,jenkins,ci/cd,git,linux,mongodb,postgresql,
 mysql,redis,kafka,spark,hadoop,pandas,numpy,scikit-learn,tensorflow,pytorch,machine learning,deep learning,nlp,
 computer vision,data analysis,data visualization,statistics,tableau,power bi,excel,rest api,graphql,microservices,agile,
-scrum,jira,figma,ui/ux,selenium,pytest,etl,airflow,llm,a/b testing,project management,communication,leadership""".replace("\n", "").split(",")
+scrum,jira,figma,ui/ux,selenium,pytest,etl,airflow,llm,a/b testing,project management,communication,leadership,html5,bootstrap,tailwind,next.js,redux,jquery,php,laravel,ruby,rails,kotlin,swift,android,ios,flutter,oracle,dynamodb,elasticsearch,snowflake,bigquery,databricks,looker,sap,salesforce,seo,google analytics,photoshop,cybersecurity,networking,unit testing,oop,data structures,algorithms,problem solving,time series,regression,classification,opencv,hugging face,langchain,generative ai,prompt engineering,github,gitlab,postman,rabbitmq,nginx,ansible,prometheus,grafana,bash,matlab,scala,devops,cloud computing,business analysis,stakeholder management,teamwork,data structures""".replace("\n", "").split(",")
 
 
 def find_skills(text):
     t = text.lower()
     return [s for s in SKILLS if re.search(rf"(?<![\w+#]){re.escape(s)}(?![\w+#])", t)]
+
+
+def has_term(text, term):
+    return bool(re.search(rf"(?<![\w+#]){re.escape(term)}(?![\w+#])", text.lower()))
+
+
+def jd_skill_list(jd):
+    """Known skills found in the JD; if few, top-up with the JD's own most important keywords."""
+    skills = find_skills(jd)
+    if len(skills) < 8:
+        ranked, _ = _jd_terms(jd, top=40)
+        for t in ranked:
+            if len(skills) >= 12:
+                break
+            if len(t) > 3 and not any(t in x or x in t for x in skills):
+                skills.append(t)
+    return skills
 
 
 def extract_text(data: bytes) -> str:
@@ -53,10 +70,10 @@ async def analyze(resume: UploadFile = File(...), job_description: str = Form(..
         raise HTTPException(422, "No readable text found. Scanned/image PDFs need OCR, which isn't supported yet.")
 
     rl = text.lower()
-    jd_skills, res_skills = find_skills(job_description), find_skills(text)
-    matched = [s for s in jd_skills if s in res_skills]
-    missing = [s for s in jd_skills if s not in res_skills]
-    extra = [s for s in res_skills if s not in jd_skills]
+    jd_skills = jd_skill_list(job_description)
+    matched = [s for s in jd_skills if has_term(text, s)]
+    missing = [s for s in jd_skills if s not in matched]
+    extra = [s for s in find_skills(text) if s not in jd_skills]
 
     vec = TfidfVectorizer(stop_words="english", ngram_range=(1, 2), sublinear_tf=True)
     m = vec.fit_transform([text, job_description])

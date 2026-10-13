@@ -12,7 +12,7 @@ from datetime import date
 STOP = set("""a an the and or of to in for with on at by from as is are be this that will you your we our their it its
 experience work working team teams ability strong skills skill years year etc including preferred required plus role job
 candidate must have has can able good great new using use based across within into such other more also any all not
-looking join company position responsibilities requirements qualifications""".split())
+looking join company position responsibilities requirements qualifications hiring manage seeking opportunity excellent knowledge understanding familiarity well need needs ensure support help make develop""".split())
 
 WEAK = ("responsible for", "worked on", "helped", "assisted", "involved in", "participated in",
         "duties included", "tasked with")
