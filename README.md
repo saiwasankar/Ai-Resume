@@ -25,6 +25,8 @@ You can also double-click `start_server.command` on macOS, then `stop_server.com
 
 - **Resume analysis:** `/api/analyze` (also available as `/analyze`) checks PDF readability, role skill overlap, semantic/text relevance, experience, impact and structure. It rejects oversized or malformed PDFs and flags likely role mismatches.
 - **ATS readiness checks:** contact details, recognizable sections, text length, role evidence and quantified impact.
+- **Input quality gates:** rejects text that does not look like a job description or a structured resume, and returns an error instead of a score for clearly unrelated pairs.
+- **Skill labels stay specific:** only recognized skills are listed as skills; generic or frequent job-description words remain ordinary text.
 - **Evidence-linked feedback:** recommendations are drawn from the job description and resume text; matched skills include their source resume lines in the API response.
 - **Local saved job tracker:** add, search, filter, update application status, and delete saved opportunities. Records live in `data/rolefit.sqlite3`; resume files and extracted resume text are not stored.
 - **API operations:** `/api/health`, `/api/jobs` CRUD, plus interactive OpenAPI/Swagger docs at `/docs`.

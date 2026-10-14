@@ -9,9 +9,10 @@ from fastapi import FastAPI, File, Form, HTTPException, Query, UploadFile
 from fastapi.responses import FileResponse
 
 from .database import connection, init_db
-from .feedback import SECTIONS, _jd_terms, _years_covered, generate_recommendations
+from .feedback import SECTIONS, _years_covered, generate_recommendations
 from .schemas import JobCreate, JobUpdate
 from .semantic import compare_text
+from .validation import is_job_description, is_resume, resume_section_headings
 
 
 @asynccontextmanager
@@ -47,16 +48,8 @@ def has_term(text, term):
 
 
 def jd_skill_list(jd):
-    """Known skills found in the JD; if few, top-up with the JD's own most important keywords."""
-    skills = find_skills(jd)
-    if len(skills) < 8:
-        ranked, _ = _jd_terms(jd, top=40)
-        for t in ranked:
-            if len(skills) >= 12:
-                break
-            if len(t) > 3 and not any(t in x or x in t for x in skills):
-                skills.append(t)
-    return skills
+    """Only return recognized skills. General JD terms are never labelled skills."""
+    return find_skills(jd)
 
 
 def extract_text(data: bytes) -> str:
@@ -84,6 +77,12 @@ async def analyze(resume: UploadFile = File(...), job_description: str = Form(..
         raise HTTPException(413, "PDF is larger than 5 MB.")
     if len(job_description.strip()) < 30:
         raise HTTPException(400, "Please paste a fuller job description.")
+    jd_skills = jd_skill_list(job_description)
+    if not is_job_description(job_description, len(jd_skills)):
+        raise HTTPException(
+            422,
+            "This text doesn't look like a job description. Paste the actual role title, responsibilities, or required qualifications before analyzing a resume.",
+        )
     try:
         if not data.startswith(b"%PDF-"):
             raise ValueError("Invalid PDF header")
@@ -92,9 +91,14 @@ async def analyze(resume: UploadFile = File(...), job_description: str = Form(..
         raise HTTPException(400, "Couldn't read that PDF. Is it corrupted or password-protected?")
     if len(text.strip()) < 100:
         raise HTTPException(422, "No readable text found. Scanned/image PDFs need OCR, which isn't supported yet.")
+    headings = resume_section_headings(text)
+    if not is_resume(text):
+        raise HTTPException(
+            422,
+            "This PDF doesn't look like a structured resume. Upload a resume with clearly labeled sections such as Experience, Skills, Education, or Projects.",
+        )
 
     rl = text.lower()
-    jd_skills = jd_skill_list(job_description)
     matched = [s for s in jd_skills if has_term(text, s)]
     missing = [s for s in jd_skills if s not in matched]
     extra = [s for s in find_skills(text) if s not in jd_skills]
@@ -113,12 +117,12 @@ async def analyze(resume: UploadFile = File(...), job_description: str = Form(..
     quant = sum(bool(re.search(r"\d|%|\$|₹", l)) for l in lines)
 
     parts = {
-        "Skills match": (len(matched) / len(jd_skills) if jd_skills else min(sim / 0.4, 1), 35),
-        "Keyword relevance": (min(sim / 0.4, 1), 25),
-        "Experience": ((min(have / jd_years, 1) if have else 0.3) if jd_years
-                       else (0.7 if re.search(SECTIONS["experience"], rl) else 0.3), 15),
-        "Quantified impact": (min(quant / len(lines) / 0.4, 1) if len(lines) >= 4 else 0.5, 15),
-        "Resume structure": (sum(bool(re.search(p, rl)) for p in SECTIONS.values()) / len(SECTIONS), 10),
+        "Skills match": (len(matched) / len(jd_skills) if jd_skills else 0.0, 35),
+        "Semantic relevance": (min(sim / 0.4, 1), 25),
+        "Experience": ((min(have / jd_years, 1) if have else 0.0) if jd_years
+                       else (1.0 if "experience" in headings else 0.0), 15),
+        "Quantified impact": (min(quant / len(lines) / 0.4, 1) if len(lines) >= 4 else 0.0, 15),
+        "Resume structure": (len(headings) / len(SECTIONS), 10),
     }
     breakdown = [{"name": k, "score": round(f * mx, 1), "max": mx} for k, (f, mx) in parts.items()]
     score = round(sum(b["score"] for b in breakdown))
@@ -126,23 +130,21 @@ async def analyze(resume: UploadFile = File(...), job_description: str = Form(..
     # wrong-role pairing. Surface it plainly and prevent a misleading high score.
     mismatch = sim < 0.12 and not matched
     if mismatch:
-        score = min(score, 20)
-        raw_total = sum(item["score"] for item in breakdown)
-        if raw_total:
-            for item in breakdown:
-                item["score"] = round(item["score"] * score / raw_total, 1)
-    verdict = ("Low relevance — possible mismatch" if mismatch else
-               "Excellent match" if score >= 80 else "Strong match" if score >= 65
+        raise HTTPException(
+            422,
+            "This resume doesn't appear relevant to the job description. Check that both documents are correct, then try again. No match score was generated.",
+        )
+    verdict = ("Excellent match" if score >= 80 else "Strong match" if score >= 65
                else "Moderate match" if score >= 45 else "Needs work")
 
-    recs = generate_recommendations(text, job_description, matched_skills=matched or None,
-                                    missing_skills=missing or None, similarity=sim)
-    summary = ("The resume appears largely unrelated to this job description. Check that you uploaded the intended resume and pasted the correct role."
-               if mismatch else
-               f"Found {len(matched)} of {len(jd_skills)} role skills in the resume, with {round(sim * 100)}% overall text relevance. Review each gap against your actual experience.")
+    recs = generate_recommendations(text, job_description, matched_skills=matched,
+                                    missing_skills=missing, similarity=sim)
+    summary = (f"Found {len(matched)} of {len(jd_skills)} recognized role skills in the resume, with {round(sim * 100)}% semantic relevance. Review each gap against your actual experience."
+               if jd_skills else
+               f"No recognized skill terms were found in the job description. Semantic relevance is {round(sim * 100)}%; use the evidence report as the primary guide.")
     ats_checks = [
         {"name": "Contact details", "passed": bool(re.search(r"[\w.+-]+@[\w.-]+\.[a-zA-Z]{2,}", text)), "detail": "Email address found" if re.search(r"[\w.+-]+@[\w.-]+\.[a-zA-Z]{2,}", text) else "Add a clearly labelled email address."},
-        {"name": "Readable sections", "passed": sum(bool(re.search(p, rl)) for p in SECTIONS.values()) >= 3, "detail": "Recognizable resume sections detected" if sum(bool(re.search(p, rl)) for p in SECTIONS.values()) >= 3 else "Use standard headings such as Experience, Skills, and Education."},
+        {"name": "Readable sections", "passed": len(headings) >= 3, "detail": f"{len(headings)} clearly labeled sections detected" if len(headings) >= 3 else "Use standard headings such as Experience, Skills, and Education."},
         {"name": "Resume length", "passed": 150 <= len(text.split()) <= 1200, "detail": f"{len(text.split())} words extracted"},
         {"name": "Role evidence", "passed": bool(matched), "detail": f"{len(matched)} role requirements supported by resume text"},
         {"name": "Measurable impact", "passed": quant > 0, "detail": f"Found quantified detail in {quant} resume lines" if quant else "Add truthful numbers to show scale or outcomes."},

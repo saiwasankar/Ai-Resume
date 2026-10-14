@@ -165,14 +165,6 @@ def generate_recommendations(resume_text, jd_text, matched_skills=None, missing_
             "These are the JD terms you already cover that the JD stresses most. Move them into the top third "
             "of page one (summary + first role bullets) so they're seen first.")
 
-    # 7. Low similarity -> use the JD's own vocabulary
-    absent_terms = [t for t in ranked if not present(t)][:5]
-    if (similarity is not None and similarity < 0.25 and absent_terms) or len(absent_terms) >= 4:
-        add(45 + (int((0.25 - similarity) * 100) if similarity is not None and similarity < 0.25 else 0),
-            "Vocabulary", "Mirror the JD's wording where it's truthful",
-            f"Frequently used JD terms missing from your resume: {', '.join(absent_terms)}. Use the same "
-            f"terminology for work you've genuinely done (e.g. say what the JD says, not a synonym).")
-
     recs.sort(key=lambda r: r["impact"], reverse=True)
     out = []
     for r in recs[:max_items]:
