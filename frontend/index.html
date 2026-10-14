@@ -1,102 +1,58 @@
-<!DOCTYPE html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Resume Analyzer</title>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap" rel="stylesheet">
-<style>
-:root{--p:#7c3aed;--p2:#a78bfa;--ink:#1e1b4b;--mut:#6b6890;--card:rgba(255,255,255,.78);--bd:rgba(124,58,237,.14);--ok:#059669;--bad:#e11d48;--warn:#d97706}
-*{box-sizing:border-box;margin:0}
-body{font-family:'Plus Jakarta Sans',system-ui,sans-serif;color:var(--ink);min-height:100vh;
-background:radial-gradient(900px 500px at 10% -10%,#ddd0ff,transparent),radial-gradient(700px 500px at 100% 0,#fbcfe8,transparent),#f6f2ff}
-.wrap{max-width:1040px;margin:0 auto;padding:28px 20px 80px}
-nav{display:flex;align-items:center;gap:10px;font-weight:800}
-.logo{width:36px;height:36px;border-radius:11px;background:linear-gradient(135deg,var(--p),#ec4899);display:grid;place-items:center;color:#fff}
-.hero{text-align:center;margin:46px 0 34px}
-.hero h1{font-size:clamp(2rem,5vw,3.4rem);font-weight:800;line-height:1.1;letter-spacing:-.03em}
-.hero h1 span{background:linear-gradient(90deg,var(--p),#ec4899);-webkit-background-clip:text;background-clip:text;color:transparent}
-.hero p{color:var(--mut);margin:14px auto 0;max-width:560px;line-height:1.6}
-.card{background:var(--card);backdrop-filter:blur(14px);border:1px solid var(--bd);border-radius:22px;padding:24px;box-shadow:0 18px 50px -24px rgba(124,58,237,.35)}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
-@media(max-width:760px){.grid{grid-template-columns:1fr}}
-h3{font-size:.8rem;text-transform:uppercase;letter-spacing:.1em;color:var(--mut);margin-bottom:12px}
-#drop{border:2px dashed var(--p2);border-radius:16px;min-height:190px;display:grid;place-items:center;text-align:center;padding:20px;cursor:pointer;transition:.2s;background:rgba(255,255,255,.5)}
-#drop:hover,#drop.on{background:#efe8ff;transform:translateY(-2px)}
-#drop b{display:block;font-size:1.05rem;margin:6px 0 4px}#drop small{color:var(--mut)}
-.ico{font-size:2.2rem}
-textarea{width:100%;height:190px;border:1px solid var(--bd);border-radius:16px;padding:14px;font:inherit;font-size:.92rem;resize:vertical;background:rgba(255,255,255,.7);color:var(--ink)}
-textarea:focus{outline:2px solid var(--p2)}
-.btn{display:block;width:100%;margin-top:18px;border:0;border-radius:16px;padding:16px;font:inherit;font-weight:700;font-size:1.05rem;color:#fff;cursor:pointer;background:linear-gradient(90deg,var(--p),#ec4899);box-shadow:0 12px 28px -10px var(--p);transition:.2s}
-.btn:hover:not(:disabled){transform:translateY(-2px)}.btn:disabled{opacity:.45;cursor:not-allowed}
-.err{display:none;margin-top:14px;padding:12px 16px;border-radius:12px;background:#ffe4e6;color:#9f1239;font-weight:500}
-#res{display:none;margin-top:34px}
-.top{display:grid;grid-template-columns:260px 1fr;gap:18px;margin-bottom:18px}
-@media(max-width:760px){.top{grid-template-columns:1fr}}
-.ring{position:relative;width:170px;height:170px;margin:0 auto}
-.ring svg{transform:rotate(-90deg)}.ring circle{fill:none;stroke-width:12;stroke-linecap:round}
-.ring .bg{stroke:#e9e2ff}.ring .fg{stroke:url(#g);transition:stroke-dashoffset 1.4s cubic-bezier(.2,.8,.2,1)}
-.ring div{position:absolute;inset:0;display:grid;place-content:center;text-align:center}
-.ring strong{font-size:3rem;font-weight:800;line-height:1}.ring span{font-size:.75rem;color:var(--mut)}
-.verdict{text-align:center;margin-top:12px;font-weight:800;font-size:1.1rem}
-.bar{margin-bottom:14px}.bar div.l{display:flex;justify-content:space-between;font-size:.88rem;font-weight:600;margin-bottom:6px}
-.track{height:10px;background:#ece6ff;border-radius:9px;overflow:hidden}.fill{height:100%;width:0;border-radius:9px;background:linear-gradient(90deg,var(--p),#ec4899);transition:width 1.2s cubic-bezier(.2,.8,.2,1)}
-.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
-.chip{padding:6px 12px;border-radius:99px;font-size:.82rem;font-weight:600}
-.chip.ok{background:#d1fae5;color:#065f46}.chip.bad{background:#ffe4e6;color:#9f1239}.chip.neu{background:#ede9fe;color:#5b21b6}
-.rec{display:flex;gap:14px;padding:18px;border-radius:16px;background:rgba(255,255,255,.7);border:1px solid var(--bd);margin-bottom:12px;animation:up .5s both}
-.rec i{flex:none;width:6px;border-radius:6px}.High i{background:var(--bad)}.Medium i{background:var(--warn)}.Low i{background:var(--ok)}
-.tag{font-size:.7rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--mut)}
-.rec h4{margin:4px 0 6px;font-size:1.02rem}.rec p{color:var(--mut);font-size:.9rem;line-height:1.55}
-.rec blockquote{margin-top:10px;padding:8px 12px;border-left:3px solid var(--p2);background:#f5f0ff;border-radius:0 10px 10px 0;font-size:.85rem;font-style:italic}
-.pill{float:right;font-size:.7rem;font-weight:800;padding:3px 10px;border-radius:99px;background:#ede9fe;color:var(--p)}
-.spin{display:none;text-align:center;margin-top:22px;color:var(--mut);font-weight:600}
-.spin::before{content:"";display:block;width:34px;height:34px;margin:0 auto 10px;border:4px solid #e0d6ff;border-top-color:var(--p);border-radius:50%;animation:r .8s linear infinite}
-@keyframes r{to{transform:rotate(360deg)}}@keyframes up{from{opacity:0;transform:translateY(14px)}}
-.again{margin-top:10px;background:none;border:2px solid var(--p2);color:var(--p);box-shadow:none}
-</style></head><body><div class="wrap">
-<nav><div class="logo">✦</div>Resume Analyzer</nav>
-<section class="hero"><h1>Make your resume <span>impossible to ignore</span></h1>
-<p>Upload your resume, paste the job you want, and get a match score with advice written for <em>your</em> resume — not generic tips.</p></section>
-
-<section class="card" id="form"><div class="grid">
-<div><h3>1 · Your resume</h3>
-<div id="drop"><div><div class="ico">📄</div><b id="fname">Drop your PDF here</b><small id="fsub">or click to browse · max 5 MB</small></div></div>
-<input type="file" id="file" accept="application/pdf" hidden></div>
-<div><h3>2 · Job description</h3><textarea id="jd" placeholder="Paste the full job posting here…"></textarea></div></div>
-<button class="btn" id="go" disabled>Analyze my resume</button>
-<div class="err" id="err"></div><div class="spin" id="spin">Reading your resume and comparing it to the job…</div></section>
-
-<section id="res">
-<div class="top"><div class="card"><div class="ring"><svg width="170" height="170" viewBox="0 0 120 120"><defs><linearGradient id="g"><stop offset="0" stop-color="#7c3aed"/><stop offset="1" stop-color="#ec4899"/></linearGradient></defs>
-<circle class="bg" cx="60" cy="60" r="54"/><circle class="fg" id="fg" cx="60" cy="60" r="54" stroke-dasharray="339.3" stroke-dashoffset="339.3"/></svg>
-<div><strong id="score">0</strong><span>out of 100</span></div></div><div class="verdict" id="verdict"></div></div>
-<div class="card"><h3>Score breakdown</h3><div id="bars"></div></div></div>
-<div class="card" style="margin-bottom:18px"><h3>Skills in this job</h3>
-<p class="tag" style="margin-bottom:8px">✓ You have</p><div class="chips" id="matched"></div>
-<p class="tag" style="margin-bottom:8px">✗ Missing</p><div class="chips" id="missing"></div>
-<p class="tag" style="margin-bottom:8px">Also on your resume</p><div class="chips" id="extra"></div></div>
-<h3 style="margin:26px 0 12px">Your personalised recommendations</h3><div id="recs"></div>
-<button class="btn again" id="again">↻ Analyze another resume</button></section></div>
-<script>
-const $=s=>document.querySelector(s),esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-let file=null;const drop=$('#drop'),inp=$('#file');
-const ready=()=>$('#go').disabled=!(file&&$('#jd').value.trim().length>=30);
-function pick(f){if(!f)return;if(!/\.pdf$/i.test(f.name))return showErr('Please choose a PDF file.');file=f;$('#fname').textContent='✅ '+f.name;$('#fsub').textContent=(f.size/1024).toFixed(0)+' KB · click to replace';$('#err').style.display='none';ready()}
-drop.onclick=()=>inp.click();inp.onchange=()=>pick(inp.files[0]);
-['dragover','dragenter'].forEach(e=>drop.addEventListener(e,x=>{x.preventDefault();drop.classList.add('on')}));
-['dragleave','drop'].forEach(e=>drop.addEventListener(e,x=>{x.preventDefault();drop.classList.remove('on')}));
-drop.addEventListener('drop',e=>pick(e.dataTransfer.files[0]));$('#jd').oninput=ready;
-function showErr(m){const e=$('#err');e.textContent=m;e.style.display='block'}
-const chips=(id,a,c,empty)=>$(id).innerHTML=a.length?a.map(s=>`<span class="chip ${c}">${esc(s)}</span>`).join(''):`<span class="tag">${empty}</span>`;
-$('#go').onclick=async()=>{const fd=new FormData();fd.append('resume',file);fd.append('job_description',$('#jd').value);
-$('#go').disabled=true;$('#err').style.display='none';$('#spin').style.display='block';
-try{const r=await fetch('/analyze',{method:'POST',body:fd}),d=await r.json();if(!r.ok)throw new Error(d.detail||'Something went wrong.');render(d)}
-catch(e){showErr(e.message)}finally{$('#spin').style.display='none';ready()}};
-function render(d){$('#form').style.display='none';$('#res').style.display='block';scrollTo({top:0,behavior:'smooth'});
-$('#verdict').textContent=d.verdict+' · '+d.similarity+'% text similarity';
-let n=0;const t=setInterval(()=>{n=Math.min(n+2,d.score);$('#score').textContent=n;if(n>=d.score)clearInterval(t)},18);
-requestAnimationFrame(()=>$('#fg').style.strokeDashoffset=339.3*(1-d.score/100));
-$('#bars').innerHTML=d.breakdown.map(b=>`<div class="bar"><div class="l"><span>${esc(b.name)}</span><span>${b.score} / ${b.max}</span></div><div class="track"><div class="fill" data-w="${b.score/b.max*100}"></div></div></div>`).join('');
-setTimeout(()=>document.querySelectorAll('.fill').forEach(f=>f.style.width=f.dataset.w+'%'),80);
-chips('#matched',d.matched,'ok','No direct matches found');chips('#missing',d.missing,'bad','Nothing missing 🎉');chips('#extra',d.extra,'neu','None detected');
-$('#recs').innerHTML=d.recommendations.map((r,i)=>`<div class="rec ${r.priority}" style="animation-delay:${i*70}ms"><i></i><div style="flex:1"><span class="pill">${r.priority} priority</span><span class="tag">${esc(r.category)}</span><h4>${esc(r.title)}</h4><p>${esc(r.detail)}</p>${r.evidence?`<blockquote>“${esc(r.evidence)}”</blockquote>`:''}</div></div>`).join('')||'<div class="card">Great news — nothing major to fix.</div>'}
-$('#again').onclick=()=>{$('#res').style.display='none';$('#form').style.display='block';file=null;inp.value='';$('#fname').textContent='Drop your PDF here';$('#fsub').textContent='or click to browse · max 5 MB';$('#fg').style.strokeDashoffset=339.3;ready();scrollTo({top:0,behavior:'smooth'})};
-</script></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0d1117">
+  <title>RoleFit — Resume intelligence</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{color-scheme:dark;--bg:#0d1117;--panel:#161b22;--panel2:#1c2129;--line:#30363d;--text:#e6edf3;--muted:#919cab;--purple:#a371f7;--green:#3fb950;--red:#f85149;--amber:#d29922;--blue:#58a6ff}
+    *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px 'DM Sans',sans-serif;min-height:100vh}button,input,textarea{font:inherit}button{cursor:pointer}a{color:inherit;text-decoration:none}
+    .topbar{height:68px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 max(24px,calc((100% - 1160px)/2));background:#0d1117}
+    .brand{display:flex;align-items:center;gap:11px;font:700 19px 'Space Grotesk';letter-spacing:-.5px}.mark{width:34px;height:34px;border-radius:10px;background:linear-gradient(145deg,#8957e5,#bc8cff);display:grid;place-items:center;color:white}.mark svg{width:20px}.topmeta{display:flex;align-items:center;gap:18px;color:var(--muted);font-size:13px}.live{color:#7ee787;display:flex;align-items:center;gap:7px}.live:before{content:'';width:7px;height:7px;background:var(--green);border-radius:50%;box-shadow:0 0 10px #3fb95088}
+    main{max-width:1160px;margin:auto;padding:48px 24px 84px}.eyebrow{color:var(--purple);font-weight:700;font-size:12px;letter-spacing:.12em;text-transform:uppercase;display:flex;align-items:center;gap:8px}.hero{display:flex;justify-content:space-between;gap:28px;align-items:end;margin-bottom:34px}.hero h1{font:600 clamp(34px,5vw,54px)/1.08 'Space Grotesk';letter-spacing:-2px;margin:15px 0 12px}.hero p{max-width:660px;color:var(--muted);line-height:1.7;margin:0}.hero-note{border:1px solid var(--line);background:#161b22;border-radius:12px;padding:13px 16px;color:var(--muted);font-size:12px;max-width:235px;line-height:1.5;flex:none}.hero-note b{color:var(--text);display:block;margin-bottom:4px}
+    .workspace{display:grid;grid-template-columns:minmax(0,1fr) 290px;gap:20px;align-items:start}.panel{border:1px solid var(--line);background:var(--panel);border-radius:12px}.flow{overflow:hidden}.flow-head{padding:20px 24px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between}.flow-title{font:600 17px 'Space Grotesk'}.draft{border:1px solid var(--line);color:var(--muted);border-radius:30px;padding:5px 10px;font-size:11px}.stepnav{display:flex;align-items:center;padding:22px 24px 8px;gap:12px}.step{display:flex;align-items:center;gap:9px;font-size:13px;color:var(--muted);font-weight:600}.step .num{width:25px;height:25px;border:1px solid var(--line);border-radius:50%;display:grid;place-items:center;font-size:12px}.step.active{color:var(--text)}.step.active .num{background:#8957e5;border-color:#8957e5;color:white}.step.done .num{background:#238636;border-color:#238636;color:white}.connector{height:1px;background:var(--line);width:50px}
+    .stepcontent{padding:18px 24px 26px}.stepcontent[hidden]{display:none}.stepheading{font:600 21px 'Space Grotesk';margin:0 0 7px}.stepdesc{color:var(--muted);margin:0 0 20px;line-height:1.55;font-size:13px}.fieldlabel{display:flex;justify-content:space-between;color:var(--text);font-weight:600;font-size:13px;margin-bottom:9px}.fieldlabel span{font-weight:400;color:var(--muted);font-size:12px}textarea{resize:vertical;min-height:218px;width:100%;background:#0d1117;border:1px solid var(--line);border-radius:8px;color:var(--text);padding:14px 15px;line-height:1.65;font-size:14px;outline:none}textarea:focus{border-color:#8957e5;box-shadow:0 0 0 3px #8957e522}textarea::placeholder{color:#6e7681}.fieldfoot{display:flex;justify-content:space-between;align-items:center;margin-top:8px;color:var(--muted);font-size:12px}.actions{display:flex;justify-content:space-between;gap:12px;margin-top:22px}.btn{border:1px solid var(--line);border-radius:7px;background:#21262d;color:var(--text);padding:10px 16px;font-weight:600;font-size:13px;transition:.15s}.btn:hover{background:#30363d}.btn.primary{background:#8957e5;border-color:#8957e5;color:white}.btn.primary:hover{background:#a371f7}.btn:disabled{opacity:.45;cursor:not-allowed}.btn .arrow{margin-left:12px}
+    .drop{min-height:170px;border:1px dashed #484f58;border-radius:9px;background:#0d1117;display:grid;place-items:center;text-align:center;padding:22px;transition:.16s;cursor:pointer}.drop:hover,.drop.over{border-color:var(--purple);background:#171322}.upload-icon{width:44px;height:44px;margin:0 auto 12px;border:1px solid var(--line);border-radius:50%;display:grid;place-items:center;color:var(--purple)}.upload-icon svg{width:20px}.drop strong{font-size:14px}.drop p{color:var(--muted);font-size:12px;margin:6px 0 0}.drop .choose{color:#bc8cff;text-decoration:underline;text-underline-offset:3px}.file-row{display:none;margin-top:12px;border:1px solid var(--line);border-radius:8px;padding:11px 13px;align-items:center;gap:10px}.file-row.show{display:flex}.pdf-icon{color:#ff7b72;font-size:12px;font-weight:700;border:1px solid #6e3635;border-radius:5px;padding:5px}.file-info{flex:1;min-width:0}.file-info b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px}.file-info small{color:var(--muted)}.remove{border:0;background:none;color:var(--muted);font-size:18px}
+    .side{padding:19px}.side h3{font:600 15px 'Space Grotesk';margin:0 0 16px}.trust{display:flex;gap:11px;padding:12px 0;border-bottom:1px solid var(--line)}.trust:last-of-type{border:0}.trust-icon{color:var(--green);font-size:16px}.trust b{font-size:12px;display:block;margin-bottom:4px}.trust p{font-size:11px;line-height:1.5;color:var(--muted);margin:0}.side-note{background:#0d1117;border:1px solid var(--line);border-radius:8px;padding:12px;color:var(--muted);font-size:11px;line-height:1.55;margin-top:16px}.side-note b{color:var(--text)}
+    .error{display:none;border:1px solid #6e3635;background:#2d1415;color:#ffb4ae;border-radius:8px;padding:12px 14px;margin-top:14px;font-size:13px;line-height:1.5}.error.show{display:block}.spinner{display:none;color:var(--muted);font-size:13px;align-items:center;gap:9px;margin-top:14px}.spinner.show{display:flex}.spin{width:16px;height:16px;border:2px solid #484f58;border-top-color:var(--purple);border-radius:50%;animation:rotate .7s linear infinite}@keyframes rotate{to{transform:rotate(360deg)}}
+    #results{display:none;margin-top:22px}.results-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}.results-head h2{font:600 23px 'Space Grotesk';margin:0}.result-grid{display:grid;grid-template-columns:240px 1fr;gap:16px}.scorebox,.detailbox{padding:21px}.scoretop{display:flex;align-items:center;gap:16px}.scorecircle{width:92px;height:92px;border-radius:50%;display:grid;place-items:center;background:conic-gradient(var(--purple) var(--score),#30363d 0);position:relative;flex:none}.scorecircle:before{content:'';position:absolute;inset:7px;border-radius:50%;background:var(--panel)}.scorecircle strong{z-index:1;font:700 27px 'Space Grotesk'}.scoremeta b{display:block;font-size:13px}.scoremeta span{font-size:12px;color:var(--muted);display:block;margin-top:5px}.result-badge{font-size:11px;padding:5px 8px;border:1px solid #484f58;border-radius:20px;display:inline-block;margin-top:7px}.metric{margin-top:20px}.metric-head{display:flex;justify-content:space-between;font-size:12px;margin-bottom:7px}.metric-head span:last-child{color:var(--muted)}.bar{height:6px;background:#30363d;border-radius:8px;overflow:hidden}.bar i{height:100%;display:block;background:var(--purple);border-radius:8px}.skillgroups{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}.skillgroup{padding:16px}.skillgroup h3{font-size:12px;margin:0 0 12px}.chips{display:flex;flex-wrap:wrap;gap:7px}.chip{font-size:11px;border-radius:20px;padding:5px 9px;background:#21262d;color:#d2a8ff;border:1px solid #3d2b5b}.chip.missing{color:#ffb4ae;border-color:#6e3635;background:#2d1415}.chip.ok{color:#7ee787;border-color:#285b34;background:#102a19}.recommendations{margin-top:15px;padding:18px}.recommendations h3{font:600 15px 'Space Grotesk';margin:0 0 12px}.rec{border-top:1px solid var(--line);padding:13px 0}.rec b{font-size:13px}.rec p{font-size:12px;color:var(--muted);line-height:1.55;margin:6px 0 0}.rec blockquote{border-left:2px solid var(--purple);margin:9px 0 0;padding:6px 10px;color:#c9d1d9;background:#0d1117;font-size:11px}.model-label{color:var(--muted);font-size:11px;margin-top:16px}.model-label strong{color:#c9d1d9}
+    @media(max-width:860px){.workspace{grid-template-columns:1fr}.side{order:2}.hero{align-items:start;flex-direction:column}.hero-note{max-width:none}.topmeta .live{display:none}}@media(max-width:560px){main{padding:32px 14px 60px}.topbar{padding:0 14px}.hero h1{letter-spacing:-1px}.stepnav{padding:18px 16px 6px;gap:8px}.connector{width:22px}.step{font-size:11px;gap:6px}.stepcontent{padding:17px 16px 20px}.result-grid{grid-template-columns:1fr}.skillgroups{grid-template-columns:1fr}.flow-head{padding:16px}.draft{display:none}}
+  </style>
+</head>
+<body>
+  <header class="topbar"><a class="brand" href="#"><span class="mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 18 12 4l8 14H4Z"/><path d="M9 14h6"/></svg></span>RoleFit</a><div class="topmeta"><span>Resume intelligence</span><span class="live">Analysis ready</span></div></header>
+  <main>
+    <section class="hero"><div><div class="eyebrow">✦ &nbsp; Evidence-led career tools</div><h1>Find the fit.<br>Back it with evidence.</h1><p>Compare a real job description with your resume. RoleFit looks for relevant skills, experience and proof of impact, then shows where the match is strong—and where it isn’t.</p></div><div class="hero-note"><b>Built for clarity</b>Every finding points back to the job criteria or resume evidence it came from.</div></section>
+    <div class="workspace">
+      <section>
+        <div class="panel flow" id="form">
+          <div class="flow-head"><div class="flow-title">New resume analysis</div><span class="draft">PRIVATE BY DEFAULT</span></div>
+          <div class="stepnav"><div class="step active" id="step1"><span class="num">1</span> Job description</div><div class="connector"></div><div class="step" id="step2"><span class="num">2</span> Your resume</div></div>
+          <div class="stepcontent" id="jobStep"><h2 class="stepheading">Start with the role</h2><p class="stepdesc">Paste the full job posting. We’ll identify the responsibilities, skills and experience the employer is asking for.</p><label class="fieldlabel" for="jd">Job description <span id="count">0 characters</span></label><textarea id="jd" placeholder="Paste the job description here…&#10;&#10;Include responsibilities, required qualifications, preferred skills and experience expectations for a more useful analysis."></textarea><div class="fieldfoot"><span>At least 30 characters</span><span>✦ &nbsp;Requirements are extracted from this role</span></div><div class="actions"><span></span><button class="btn primary" id="next" disabled>Continue to resume <span class="arrow">→</span></button></div></div>
+          <div class="stepcontent" id="resumeStep" hidden><h2 class="stepheading">Add your resume</h2><p class="stepdesc">Upload a text based PDF. Your resume is analyzed against the role you just added.</p><div class="fieldlabel">Resume file <span>PDF · up to 5 MB</span></div><div class="drop" id="drop"><div><div class="upload-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 16V4m0 0L7 9m5-5 5 5"/><path d="M5 14v5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-5"/></svg></div><strong>Drag and drop your PDF here</strong><p>or <span class="choose">choose a file</span> from your device</p><p>Text based PDFs only · 5 MB maximum</p></div></div><input type="file" id="file" accept="application/pdf,.pdf" hidden><div class="file-row" id="fileRow"><span class="pdf-icon">PDF</span><span class="file-info"><b id="fname"></b><small id="fsize"></small></span><button class="remove" id="remove" aria-label="Remove file">×</button></div><div class="actions"><button class="btn" id="back">← &nbsp; Edit job description</button><button class="btn primary" id="go" disabled>Analyze resume <span class="arrow">→</span></button></div></div>
+          <div class="error" id="err" role="alert"></div><div class="spinner" id="spin"><span class="spin"></span>Analyzing role requirements and resume evidence…</div>
+        </div>
+        <section id="results"><div class="results-head"><h2>Your match report</h2><button class="btn" id="again">＋ &nbsp; New analysis</button></div><div class="result-grid"><div class="panel scorebox"><div class="scoretop"><div class="scorecircle" id="scoreCircle"><strong id="score">0</strong></div><div class="scoremeta"><b id="verdict">—</b><span>Evidence based fit score</span><span class="result-badge" id="quality">Analysis complete</span></div></div><div id="bars"></div><div class="model-label">Analysis method: <strong id="method">—</strong></div></div><div class="panel detailbox"><div class="eyebrow">✦ &nbsp; Role alignment</div><h3 style="font:600 17px 'Space Grotesk';margin:8px 0 5px">What the evidence says</h3><p id="summary" style="font-size:13px;line-height:1.6;color:var(--muted);margin:0"></p><div class="skillgroups"><div class="panel skillgroup"><h3>✓ &nbsp; Supported by your resume</h3><div class="chips" id="matched"></div></div><div class="panel skillgroup"><h3>＋ &nbsp; Not evidenced yet</h3><div class="chips" id="missing"></div></div></div><div class="panel skillgroup" style="margin-top:14px"><h3>Other relevant strengths</h3><div class="chips" id="extra"></div></div></div></div><div class="panel recommendations"><h3>Specific ways to strengthen your application</h3><div id="recs"></div></div></section>
+      </section>
+      <aside class="panel side"><h3>How RoleFit analyzes</h3><div class="trust"><span class="trust-icon">◎</span><div><b>Meaning, not just words</b><p>Related experience can count even when the resume uses different phrasing.</p></div></div><div class="trust"><span class="trust-icon">✓</span><div><b>Evidence before score</b><p>Skills are checked against your resume text. Unsupported requirements remain gaps.</p></div></div><div class="trust"><span class="trust-icon">↗</span><div><b>Irrelevant matches are flagged</b><p>A weak role-to-resume relationship is shown as a mismatch instead of a positive fit.</p></div></div><div class="side-note"><b>About the model</b><br>This analyzer uses semantic text analysis and role-specific evidence checks. It does not train on private resumes or claim access to a live resume database.</div></aside>
+    </div>
+  </main>
+  <script>
+    const $=s=>document.querySelector(s), esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));let file=null;
+    const jd=$('#jd'),readyNext=()=>$('#next').disabled=jd.value.trim().length<30;
+    jd.addEventListener('input',()=>{$('#count').textContent=`${jd.value.length} characters`;readyNext()});
+    $('#next').onclick=()=>{$('#jobStep').hidden=true;$('#resumeStep').hidden=false;$('#step1').classList.remove('active');$('#step1').classList.add('done');$('#step1 .num').textContent='✓';$('#step2').classList.add('active')};
+    $('#back').onclick=()=>{$('#resumeStep').hidden=true;$('#jobStep').hidden=false;$('#step2').classList.remove('active');$('#step1').classList.add('active');$('#step1').classList.remove('done');$('#step1 .num').textContent='1'};
+    const drop=$('#drop'),inp=$('#file');function showError(msg){$('#err').textContent=msg;$('#err').classList.add('show')}
+    function setFile(f){if(!f)return;if(!/\.pdf$/i.test(f.name)){showError('Please select a PDF file.');return}if(f.size>5*1024*1024){showError('This PDF is larger than 5 MB.');return}file=f;$('#err').classList.remove('show');$('#fname').textContent=f.name;$('#fsize').textContent=`${(f.size/1024).toFixed(0)} KB`;$('#fileRow').classList.add('show');$('#drop').style.display='none';$('#go').disabled=false}
+    drop.onclick=()=>inp.click();inp.onchange=()=>setFile(inp.files[0]);['dragover','dragenter'].forEach(e=>drop.addEventListener(e,x=>{x.preventDefault();drop.classList.add('over')}));['dragleave','drop'].forEach(e=>drop.addEventListener(e,x=>{x.preventDefault();drop.classList.remove('over')}));drop.addEventListener('drop',e=>setFile(e.dataTransfer.files[0]));
+    function clearFile() {file=null;inp.value='';$('#fileRow').classList.remove('show');drop.style.display='grid';$('#go').disabled=true}$('#remove').onclick=clearFile;
+    $('#go').onclick=async()=>{const fd=new FormData();fd.append('resume',file);fd.append('job_description',jd.value);$('#go').disabled=true;$('#err').classList.remove('show');$('#spin').classList.add('show');try{const r=await fetch('/analyze',{method:'POST',body:fd});const d=await r.json();if(!r.ok)throw Error(d.detail||'Analysis failed. Please try again.');render(d)}catch(e){showError(e.message)}finally{$('#spin').classList.remove('show');$('#go').disabled=!file}};
+    function chips(id,items,kind,empty){$(id).innerHTML=items?.length?items.map(x=>`<span class="chip ${kind}">${esc(x)}</span>`).join(''):`<span style="font-size:12px;color:var(--muted)">${empty}</span>`}
+    function render(d){$('#form').style.display='none';$('#results').style.display='block';$('#score').textContent=d.score;$('#scoreCircle').style.setProperty('--score',`${d.score*3.6}deg`);$('#verdict').textContent=d.verdict;$('#quality').textContent=d.mismatch?'Role mismatch flagged':'Evidence reviewed';$('#summary').textContent=d.summary||'The analysis compares role requirements with evidence found in the resume.';$('#method').textContent=d.analysis_method||'Semantic + evidence checks';$('#bars').innerHTML=(d.breakdown||[]).map(x=>`<div class="metric"><div class="metric-head"><span>${esc(x.name||x.label)}</span><span>${esc(x.score)} / ${esc(x.max)}</span></div><div class="bar"><i style="width:${Math.max(0,Math.min(100,x.score/x.max*100))}%"></i></div></div>`).join('');chips('#matched',d.matched,'ok','No supported requirements found');chips('#missing',d.missing,'missing','All listed skills supported');chips('#extra',d.extra,'','No additional skills detected');$('#recs').innerHTML=(d.recommendations||[]).map(r=>`<div class="rec"><b>${esc(r.title)}</b><p>${esc(r.detail)}</p>${r.evidence?`<blockquote>“${esc(r.evidence)}”</blockquote>`:''}</div>`).join('')||'<p style="color:var(--muted);font-size:13px">No additional recommendations.</p>';scrollTo({top:0,behavior:'smooth'})}
+    $('#again').onclick=()=>{location.reload()};
+  </script>
+</body>
+</html>
