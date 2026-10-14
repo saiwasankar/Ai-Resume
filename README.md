@@ -1,29 +1,36 @@
-# RoleFit — Resume Analyzer
+# RoleFit — Resume Intelligence
 
-RoleFit compares a text-based PDF resume with a target job description. The workflow starts with the job description, then asks for the resume, and returns role alignment, supported and missing skills, and recommendations based on the supplied text.
+RoleFit is a local-first resume analysis and job application workspace. It compares a text-based PDF resume with a pasted job description, reports skill and ATS evidence, and keeps a private job application tracker in SQLite.
 
-## Analysis approach
+## Start and stop the local server
 
-- Uses the pretrained `sentence-transformers/all-MiniLM-L6-v2` encoder for semantic text similarity when the model can be loaded.
-- Falls back to TF-IDF if sentence-transformers is unavailable or the model cannot be loaded. The response names the method actually used.
-- Checks role skills and resume evidence separately; semantic similarity alone does not establish that a candidate has a skill.
-- Flags very low relevance with no shared role skills as a likely mismatch and caps that score at 20.
-
-This project does **not** train on a real-time resume database, scrape resumes, or retain uploaded resumes as training data. The encoder is a general pretrained language model. It downloads on first use and requires internet access then. No private or live industry resume dataset is configured. The score is an aid for reviewing alignment, not a hiring decision.
-
-## Run locally
+From Terminal, open this project folder and run:
 
 ```bash
-python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
-pip install -r requirements.txt
-python -m uvicorn app.main:app --reload
+cd "/Users/saiwasankar/Documents/resume analyser"
+./start_server.sh
 ```
 
-Open <http://127.0.0.1:8000>. Upload a text-based PDF (up to 5 MB). Scanned/image PDFs are not supported without OCR.
+Open <http://127.0.0.1:8000>. Interactive API documentation is at <http://127.0.0.1:8000/docs> and health status is at <http://127.0.0.1:8000/api/health>.
 
-## Stack
+The first run creates `.venv` and installs the small backend requirements. The start command keeps the server in the terminal and logs to `server.log`. Press **Ctrl+C** there, or open another Terminal in this folder and run:
 
-- FastAPI, pdfplumber
-- HTML, CSS, JavaScript
-- sentence-transformers and scikit-learn
+```bash
+./stop_server.sh
+```
+
+You can also double-click `start_server.command` on macOS, then `stop_server.command` to stop it. To use a different local port, set it before starting, e.g. `PORT=8010 ./start_server.sh`.
+
+## Backend capabilities
+
+- **Resume analysis:** `/api/analyze` (also available as `/analyze`) checks PDF readability, role skill overlap, semantic/text relevance, experience, impact and structure. It rejects oversized or malformed PDFs and flags likely role mismatches.
+- **ATS readiness checks:** contact details, recognizable sections, text length, role evidence and quantified impact.
+- **Evidence-linked feedback:** recommendations are drawn from the job description and resume text; matched skills include their source resume lines in the API response.
+- **Local saved job tracker:** add, search, filter, update application status, and delete saved opportunities. Records live in `data/rolefit.sqlite3`; resume files and extracted resume text are not stored.
+- **API operations:** `/api/health`, `/api/jobs` CRUD, plus interactive OpenAPI/Swagger docs at `/docs`.
+
+The job tracker is local and user populated; this project does not currently connect to a live job feed, account system, AI chat provider, or community backend. Uploaded resumes are not training data. The sentence-transformers encoder is optional; install it separately with `pip install -r requirements-ai.txt`. Without it, RoleFit reports and uses its TF-IDF fallback.
+
+## Requirements
+
+Python 3.9+ is recommended. Core dependencies: FastAPI, Uvicorn, pdfplumber and scikit-learn. Resume PDFs must contain selectable text; scanned/image-only PDFs need OCR, which is not currently included. The local analyzer is a decision aid, not a hiring decision.

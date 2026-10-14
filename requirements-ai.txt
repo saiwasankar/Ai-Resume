@@ -1,0 +1,3 @@
+# Optional pretrained semantic encoder. The core backend uses TF-IDF if this is absent.
+-r requirements.txt
+sentence-transformers
