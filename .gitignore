@@ -1,6 +1,10 @@
+.venv/
 venv/
 .env
 __pycache__/
 *.pyc
 .vscode/
 .DS_Store
+.rolefit-server.pid
+server.log
+data/*.sqlite3
