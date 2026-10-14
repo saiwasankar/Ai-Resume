@@ -6,10 +6,9 @@ from pathlib import Path
 import pdfplumber
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.responses import FileResponse
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
 
 from .feedback import SECTIONS, _jd_terms, _years_covered, generate_recommendations
+from .semantic import compare_text
 
 app = FastAPI(title="Resume Analyzer")
 INDEX = Path(__file__).resolve().parent.parent / "frontend" / "index.html"
@@ -75,9 +74,8 @@ async def analyze(resume: UploadFile = File(...), job_description: str = Form(..
     missing = [s for s in jd_skills if s not in matched]
     extra = [s for s in find_skills(text) if s not in jd_skills]
 
-    vec = TfidfVectorizer(stop_words="english", ngram_range=(1, 2), sublinear_tf=True)
-    m = vec.fit_transform([text, job_description])
-    sim = float(cosine_similarity(m[0], m[1])[0][0])
+    semantic = compare_text(text, job_description)
+    sim = semantic["similarity"]
 
     jd_years = max([int(x) for x in re.findall(r"(\d+)\+?\s*(?:years|yrs)", job_description.lower())], default=0)
     have = _years_covered(text)
@@ -94,11 +92,25 @@ async def analyze(resume: UploadFile = File(...), job_description: str = Form(..
     }
     breakdown = [{"name": k, "score": round(f * mx, 1), "max": mx} for k, (f, mx) in parts.items()]
     score = round(sum(b["score"] for b in breakdown))
-    verdict = ("Excellent match" if score >= 80 else "Strong match" if score >= 65
+    # A near-zero similarity and no shared role skills is a likely wrong-file or
+    # wrong-role pairing. Surface it plainly and prevent a misleading high score.
+    mismatch = sim < 0.12 and not matched
+    if mismatch:
+        score = min(score, 20)
+        raw_total = sum(item["score"] for item in breakdown)
+        if raw_total:
+            for item in breakdown:
+                item["score"] = round(item["score"] * score / raw_total, 1)
+    verdict = ("Low relevance — possible mismatch" if mismatch else
+               "Excellent match" if score >= 80 else "Strong match" if score >= 65
                else "Moderate match" if score >= 45 else "Needs work")
 
     recs = generate_recommendations(text, job_description, matched_skills=matched or None,
                                     missing_skills=missing or None, similarity=sim)
-    return {"score": score, "verdict": verdict, "breakdown": breakdown, "matched": matched,
+    summary = ("The resume appears largely unrelated to this job description. Check that you uploaded the intended resume and pasted the correct role."
+               if mismatch else
+               f"Found {len(matched)} of {len(jd_skills)} role skills in the resume, with {round(sim * 100)}% overall text relevance. Review each gap against your actual experience.")
+    return {"score": score, "verdict": verdict, "mismatch": mismatch, "summary": summary,
+            "analysis_method": semantic["analysis_method"], "breakdown": breakdown, "matched": matched,
             "missing": missing, "extra": extra[:12], "similarity": round(sim * 100),
             "words": len(text.split()), "recommendations": recs}
