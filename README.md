@@ -23,15 +23,16 @@ You can also double-click `start_server.command` on macOS, then `stop_server.com
 
 ## Backend capabilities
 
-- **Resume analysis:** `/api/analyze` (also available as `/analyze`) checks PDF readability, role skill overlap, semantic/text relevance, experience, impact and structure. It rejects oversized or malformed PDFs and flags likely role mismatches.
+- **Resume analysis:** `/api/analyze` (also available as `/analyze`) extracts individual job criteria and links each to the closest resume passage. The displayed fit percentage is the share of extracted criteria with supporting evidence; resume formatting does not inflate it.
 - **ATS readiness checks:** contact details, recognizable sections, text length, role evidence and quantified impact.
 - **Input quality gates:** rejects text that does not look like a job description or a structured resume, and returns an error instead of a score for clearly unrelated pairs.
 - **Skill labels stay specific:** only recognized skills are listed as skills; generic or frequent job-description words remain ordinary text.
-- **Evidence-linked feedback:** recommendations are drawn from the job description and resume text; matched skills include their source resume lines in the API response.
+- **Criterion-level evidence:** every extracted criterion is marked supported or not evidenced, with a resume quote and a heuristic confidence label where evidence is found. Unsupported means no sufficiently related passage was found, not proof the applicant lacks that experience.
+- **Evidence-linked feedback:** recommendations are drawn from the job description and resume text; exact skill hits and criterion matches are traceable in the API response.
 - **Local saved job tracker:** add, search, filter, update application status, and delete saved opportunities. Records live in `data/rolefit.sqlite3`; resume files and extracted resume text are not stored.
 - **API operations:** `/api/health`, `/api/jobs` CRUD, plus interactive OpenAPI/Swagger docs at `/docs`.
 
-The job tracker is local and user populated; this project does not currently connect to a live job feed, account system, AI chat provider, or community backend. Uploaded resumes are not training data. The sentence-transformers encoder is optional; install it separately with `pip install -r requirements-ai.txt`. Without it, RoleFit reports and uses its TF-IDF fallback.
+The requirement extractor and matching thresholds are heuristic and have not been validated against a representative, expert-labeled hiring benchmark. Treat the report as candidate-facing guidance, not a hiring decision or proven measure of job performance. The job tracker is local and user populated; this project does not currently connect to a live job feed, account system, AI chat provider, or community backend. Uploaded resumes are not training data. The sentence-transformers encoder is optional; install it separately with `pip install -r requirements-ai.txt`. Without it, RoleFit uses its TF-IDF fallback.
 
 ## Requirements
 

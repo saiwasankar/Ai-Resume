@@ -10,6 +10,7 @@ from fastapi.responses import FileResponse
 
 from .database import connection, init_db
 from .feedback import SECTIONS, _years_covered, generate_recommendations
+from .evidence import analyze_requirements
 from .schemas import JobCreate, JobUpdate
 from .semantic import compare_text
 from .validation import is_job_description, is_resume, resume_section_headings
@@ -116,44 +117,41 @@ async def analyze(resume: UploadFile = File(...), job_description: str = Form(..
     lines = [l for l in text.splitlines() if 30 <= len(l.strip()) <= 260]
     quant = sum(bool(re.search(r"\d|%|\$|₹", l)) for l in lines)
 
-    parts = {
-        "Skills match": (len(matched) / len(jd_skills) if jd_skills else 0.0, 35),
-        "Semantic relevance": (min(sim / 0.4, 1), 25),
-        "Experience": ((min(have / jd_years, 1) if have else 0.0) if jd_years
-                       else (1.0 if "experience" in headings else 0.0), 15),
-        "Quantified impact": (min(quant / len(lines) / 0.4, 1) if len(lines) >= 4 else 0.0, 15),
-        "Resume structure": (len(headings) / len(SECTIONS), 10),
-    }
-    breakdown = [{"name": k, "score": round(f * mx, 1), "max": mx} for k, (f, mx) in parts.items()]
-    score = round(sum(b["score"] for b in breakdown))
+    requirements = analyze_requirements(job_description, text, jd_skills)
+    supported_count = sum(item["status"] == "supported" for item in requirements)
+    coverage = supported_count / len(requirements) if requirements else 0.0
+    # The summary score now reflects only traceable job-criterion evidence.
+    # Structure and formatting remain diagnostics and do not inflate job fit.
+    breakdown = [{"name": "Job requirements with resume evidence", "score": round(coverage * 100, 1), "max": 100}]
+    score = round(coverage * 100)
     # A near-zero similarity and no shared role skills is a likely wrong-file or
     # wrong-role pairing. Surface it plainly and prevent a misleading high score.
-    mismatch = sim < 0.12 and not matched
+    mismatch = bool(requirements) and supported_count == 0 and sim < 0.16
     if mismatch:
         raise HTTPException(
             422,
             "This resume doesn't appear relevant to the job description. Check that both documents are correct, then try again. No match score was generated.",
         )
-    verdict = ("Excellent match" if score >= 80 else "Strong match" if score >= 65
-               else "Moderate match" if score >= 45 else "Needs work")
+    verdict = ("Strong evidence" if score >= 75 else "Some evidence" if score >= 40
+               else "Limited evidence")
 
     recs = generate_recommendations(text, job_description, matched_skills=matched,
                                     missing_skills=missing, similarity=sim)
-    summary = (f"Found {len(matched)} of {len(jd_skills)} recognized role skills in the resume, with {round(sim * 100)}% semantic relevance. Review each gap against your actual experience."
-               if jd_skills else
-               f"No recognized skill terms were found in the job description. Semantic relevance is {round(sim * 100)}%; use the evidence report as the primary guide.")
+    summary = (f"Resume text supports {supported_count} of {len(requirements)} extracted job criteria. Each supported item includes its closest evidence passage; unsupported items are not assumed to be absent from your experience."
+               if requirements else "Could not reliably extract individual criteria from this job description. Review the input and try a fuller posting.")
     ats_checks = [
         {"name": "Contact details", "passed": bool(re.search(r"[\w.+-]+@[\w.-]+\.[a-zA-Z]{2,}", text)), "detail": "Email address found" if re.search(r"[\w.+-]+@[\w.-]+\.[a-zA-Z]{2,}", text) else "Add a clearly labelled email address."},
         {"name": "Readable sections", "passed": len(headings) >= 3, "detail": f"{len(headings)} clearly labeled sections detected" if len(headings) >= 3 else "Use standard headings such as Experience, Skills, and Education."},
         {"name": "Resume length", "passed": 150 <= len(text.split()) <= 1200, "detail": f"{len(text.split())} words extracted"},
-        {"name": "Role evidence", "passed": bool(matched), "detail": f"{len(matched)} role requirements supported by resume text"},
+        {"name": "Role evidence", "passed": supported_count > 0, "detail": f"{supported_count} of {len(requirements)} extracted criteria have supporting resume text"},
         {"name": "Measurable impact", "passed": quant > 0, "detail": f"Found quantified detail in {quant} resume lines" if quant else "Add truthful numbers to show scale or outcomes."},
     ]
     return {"score": score, "verdict": verdict, "mismatch": mismatch, "summary": summary,
-            "analysis_method": semantic["analysis_method"], "breakdown": breakdown, "matched": matched,
+            "analysis_method": semantic["analysis_method"] + " + criterion-level evidence", "breakdown": breakdown, "matched": matched,
             "missing": missing, "extra": extra[:12], "similarity": round(sim * 100),
             "words": len(text.split()), "skill_evidence": skill_evidence,
-            "ats_checks": ats_checks, "recommendations": recs}
+            "requirements": requirements, "requirements_supported": supported_count,
+            "requirements_total": len(requirements), "ats_checks": ats_checks, "recommendations": recs}
 
 
 @app.get("/api/jobs", tags=["Job tracker"])

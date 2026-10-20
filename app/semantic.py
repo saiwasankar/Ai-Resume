@@ -41,3 +41,21 @@ def compare_text(resume_text: str, job_text: str) -> dict:
             "similarity": round(score, 4),
             "analysis_method": "TF-IDF fallback + evidence checks",
         }
+
+
+def compare_to_many(reference: str, candidates: list[str]) -> list[float]:
+    """Compare one criterion with many resume lines in one model call."""
+    if not reference.strip() or not candidates:
+        return [0.0] * len(candidates)
+    try:
+        model = _embedding_model()
+        vectors = model.encode([reference, *candidates], normalize_embeddings=True)
+        return [round(max(0.0, min(float(vectors[0] @ vector), 1.0)), 4) for vector in vectors[1:]]
+    except Exception:
+        vectorizer = TfidfVectorizer(stop_words="english", ngram_range=(1, 2), sublinear_tf=True)
+        try:
+            vectors = vectorizer.fit_transform([reference, *candidates])
+            scores = cosine_similarity(vectors[0:1], vectors[1:])[0]
+            return [round(float(score), 4) for score in scores]
+        except ValueError:
+            return [0.0] * len(candidates)
