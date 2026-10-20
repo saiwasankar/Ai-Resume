@@ -28,6 +28,7 @@ You can also double-click `start_server.command` on macOS, then `stop_server.com
 - **Input quality gates:** rejects text that does not look like a job description or a structured resume, and returns an error instead of a score for clearly unrelated pairs.
 - **Skill labels stay specific:** only recognized skills are listed as skills; generic or frequent job-description words remain ordinary text.
 - **Criterion-level evidence:** every extracted criterion is marked supported or not evidenced, with a resume quote and a heuristic confidence label where evidence is found. Unsupported means no sufficiently related passage was found, not proof the applicant lacks that experience.
+- **Organization batch review:** `/api/organization/analyze` accepts one job description and up to 100 PDF resumes, returns ranked evidence coverage, lets the recruiter set a requested shortlist size, and preserves parse failures for manual review. The batch view is decision support and does not automatically reject candidates.
 - **Evidence-linked feedback:** recommendations are drawn from the job description and resume text; exact skill hits and criterion matches are traceable in the API response.
 - **Local saved job tracker:** add, search, filter, update application status, and delete saved opportunities. Records live in `data/rolefit.sqlite3`; resume files and extracted resume text are not stored.
 - **API operations:** `/api/health`, `/api/jobs` CRUD, plus interactive OpenAPI/Swagger docs at `/docs`.

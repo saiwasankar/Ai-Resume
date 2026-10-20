@@ -154,6 +154,51 @@ async def analyze(resume: UploadFile = File(...), job_description: str = Form(..
             "requirements_total": len(requirements), "ats_checks": ats_checks, "recommendations": recs}
 
 
+@app.post("/api/organization/analyze")
+async def organization_analyze(
+    job_description: str = Form(...),
+    resumes: list[UploadFile] = File(...),
+    shortlist_size: int = Form(5),
+):
+    """Compare many resumes for one role and return an explainable review queue.
+
+    This endpoint ranks evidence for recruiter review. It does not make an
+    employment decision, infer protected traits, or silently discard a file.
+    """
+    if len(resumes) == 0:
+        raise HTTPException(400, "Upload at least one PDF resume.")
+    if len(resumes) > 100:
+        raise HTTPException(413, "Upload up to 100 resumes per batch.")
+    if not 1 <= shortlist_size <= len(resumes):
+        raise HTTPException(400, f"Shortlist size must be between 1 and {len(resumes)}.")
+    results, errors = [], []
+    for position, resume in enumerate(resumes):
+        name = resume.filename or f"resume-{position + 1}.pdf"
+        try:
+            result = await analyze(resume=resume, job_description=job_description)
+            # Preserve the source filename and make uncertainty visible in the queue.
+            result["filename"] = name
+            result["review_required"] = result.get("mismatch", False) or result.get("score", 0) < 45
+            result["shortlist_recommended"] = False
+            results.append(result)
+        except HTTPException as exc:
+            errors.append({"filename": name, "error": str(exc.detail)})
+    results.sort(key=lambda item: (item.get("score", 0), item.get("requirements_supported", 0)), reverse=True)
+    for rank, result in enumerate(results, 1):
+        result["rank"] = rank
+        result["shortlist_recommended"] = rank <= shortlist_size and not result["review_required"]
+    return {
+        "job_description_valid": True,
+        "candidate_count": len(resumes),
+        "analyzed_count": len(results),
+        "shortlist_size": shortlist_size,
+        "candidates": results,
+        "errors": errors,
+        "human_review_required": True,
+        "notice": "Use this queue as decision support. Review the evidence for every candidate before contacting, advancing, or rejecting anyone.",
+    }
+
+
 @app.get("/api/jobs", tags=["Job tracker"])
 def list_jobs(q: str = Query(default="", max_length=120), status: str = Query(default="", max_length=20)):
     if status and status not in JOB_STATUSES:
