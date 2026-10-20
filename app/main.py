@@ -1,5 +1,6 @@
 """RoleFit API and web entry point. Interactive OpenAPI docs are served at /docs."""
 import io
+import json
 import re
 from pathlib import Path
 from contextlib import asynccontextmanager
@@ -169,13 +170,37 @@ async def analyze(resume: UploadFile = File(...), job_description: str = Form(..
         {"name": "Role evidence", "passed": supported_count > 0, "detail": f"{supported_count} of {len(requirements)} extracted criteria have supporting resume text"},
         {"name": "Measurable impact", "passed": quant > 0, "detail": f"Found quantified detail in {quant} resume lines" if quant else "Add truthful numbers to show scale or outcomes."},
     ]
-    return {"score": score, "verdict": verdict, "mismatch": mismatch, "summary": summary,
+    result = {"score": score, "verdict": verdict, "mismatch": mismatch, "summary": summary,
             "analysis_method": semantic["analysis_method"] + " + criterion-level evidence", "model": model_status(), "breakdown": breakdown, "matched": matched,
             "missing": missing, "extra": extra[:12], "similarity": round(sim * 100),
             "skill_priorities": skill_priorities,
             "words": len(text.split()), "skill_evidence": skill_evidence,
             "requirements": requirements, "requirements_supported": supported_count,
             "requirements_total": len(requirements), "ats_checks": ats_checks, "recommendations": recs}
+    with connection() as conn:
+        conn.execute(
+            "INSERT INTO analyses (filename, job_title, job_description, score, verdict, summary, result_json) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            ((resume.filename or "").strip(), (job_description.strip().splitlines()[0][:160] if job_description.strip() else "Role"), job_description.strip(), score, verdict, summary, json.dumps(result)),
+        )
+    return result
+
+
+@app.get("/api/history", tags=["Analysis history"])
+def analysis_history(limit: int = Query(default=30, ge=1, le=100)):
+    with connection() as conn:
+        rows = conn.execute(
+            "SELECT id, filename, job_title, score, verdict, summary, created_at FROM analyses ORDER BY id DESC LIMIT ?",
+            (limit,),
+        ).fetchall()
+        return [dict(row) for row in rows]
+
+
+@app.delete("/api/history/{analysis_id}", status_code=204, tags=["Analysis history"])
+def delete_analysis(analysis_id: int):
+    with connection() as conn:
+        cursor = conn.execute("DELETE FROM analyses WHERE id = ?", (analysis_id,))
+        if cursor.rowcount == 0:
+            raise HTTPException(404, "Analysis history item not found.")
 
 
 @app.post("/api/organization/analyze")
