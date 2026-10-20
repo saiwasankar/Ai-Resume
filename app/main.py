@@ -2,12 +2,14 @@
 import io
 import json
 import re
+import secrets
+import zipfile
 from pathlib import Path
 from contextlib import asynccontextmanager
 
 import pdfplumber
 from fastapi import FastAPI, File, Form, HTTPException, Query, UploadFile
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 
 from .database import connection, init_db
 from .feedback import SECTIONS, _years_covered, generate_recommendations
@@ -32,6 +34,10 @@ app = FastAPI(
 )
 INDEX = Path(__file__).resolve().parent.parent / "frontend" / "index.html"
 MAX_PDF_BYTES = 5 * 1024 * 1024
+MAX_ZIP_BYTES = 50 * 1024 * 1024
+MAX_PREVIEW_BYTES = 50 * 1024 * 1024
+PDF_PREVIEWS: dict[str, bytes] = {}
+PDF_PREVIEW_BYTES = 0
 JOB_STATUSES = ("saved", "applied", "interview", "offer", "rejected", "archived")
 
 SKILLS = """python,java,javascript,typescript,c++,c#,golang,rust,sql,nosql,html,css,react,angular,vue,node.js,express,
@@ -231,42 +237,94 @@ async def organization_analyze(
     resumes: list[UploadFile] = File(...),
     shortlist_size: int = Form(5),
 ):
-    """Compare many resumes for one role and return an explainable review queue.
+    """Compare PDF resumes and ZIP bundles for one role.
 
-    This endpoint ranks evidence for recruiter review. It does not make an
-    employment decision, infer protected traits, or silently discard a file.
+    ZIP files are expanded in memory, PDF entries are analyzed individually,
+    and invalid or unsupported entries are returned in ``errors`` for review.
     """
-    if len(resumes) == 0:
-        raise HTTPException(400, "Upload at least one PDF resume.")
-    if len(resumes) > 100:
-        raise HTTPException(413, "Upload up to 100 resumes per batch.")
-    if not 1 <= shortlist_size <= len(resumes):
-        raise HTTPException(400, f"Shortlist size must be between 1 and {len(resumes)}.")
-    results, errors = [], []
-    for position, resume in enumerate(resumes):
+    if not resumes:
+        raise HTTPException(400, "Upload at least one PDF or ZIP file.")
+    if len(job_description.strip()) < 30:
+        raise HTTPException(400, "Please paste a fuller job description.")
+    jd_skills = jd_skill_list(job_description)
+    if not is_job_description(job_description, len(jd_skills)):
+        raise HTTPException(422, "This does not look like a job description. Include a role title plus at least one practical responsibility and required skill, for example: Backend Engineer - build Python APIs with PostgreSQL.")
+
+    expanded: list[tuple[UploadFile, str]] = []
+    errors: list[dict] = []
+    for upload in resumes:
+        source = upload.filename or "uploaded-file"
+        lower = source.lower()
+        if lower.endswith(".pdf"):
+            data = await upload.read(MAX_PDF_BYTES + 1)
+            if len(data) > MAX_PDF_BYTES:
+                errors.append({"filename": source, "error": "PDF is larger than 5 MB."})
+                continue
+            expanded.append((UploadFile(file=io.BytesIO(data), filename=source), store_pdf_preview(data)))
+            continue
+        if not lower.endswith(".zip"):
+            errors.append({"filename": source, "error": "Only PDF and ZIP files are supported."})
+            continue
+        try:
+            archive_data = await upload.read(MAX_ZIP_BYTES + 1)
+            if len(archive_data) > MAX_ZIP_BYTES:
+                errors.append({"filename": source, "error": "ZIP file is larger than 50 MB."})
+                continue
+            with zipfile.ZipFile(io.BytesIO(archive_data)) as archive:
+                entries = [item for item in archive.infolist() if not item.is_dir()]
+                pdf_entries = [item for item in entries if item.filename.lower().endswith(".pdf")]
+                if not pdf_entries:
+                    errors.append({"filename": source, "error": "No PDF resumes found in this ZIP file."})
+                    continue
+                for entry in pdf_entries:
+                    safe_name = PurePosixPath(entry.filename).name or "resume.pdf"
+                    if entry.file_size > MAX_PDF_BYTES:
+                        errors.append({"filename": f"{source} / {safe_name}", "error": "PDF is larger than 5 MB."})
+                        continue
+                    data = archive.read(entry)
+                    expanded.append((UploadFile(file=io.BytesIO(data), filename=f"{source} / {safe_name}"), store_pdf_preview(data)))
+                ignored = len(entries) - len(pdf_entries)
+                if ignored:
+                    errors.append({"filename": source, "error": f"Ignored {ignored} non-PDF file(s) in this ZIP."})
+        except (zipfile.BadZipFile, OSError, RuntimeError) as exc:
+            errors.append({"filename": source, "error": "Could not open this ZIP file."})
+
+    if not expanded:
+        detail = "No readable PDF resumes were found in the upload."
+        if errors:
+            detail += " Check the file errors and try again."
+        raise HTTPException(400, detail)
+    if len(expanded) > 100:
+        raise HTTPException(413, "Upload up to 100 PDF resumes per batch, including resumes extracted from ZIP files.")
+    if not 1 <= shortlist_size <= len(expanded):
+        raise HTTPException(400, f"Shortlist size must be between 1 and {len(expanded)} extracted resumes.")
+
+    results = []
+    for position, (resume, preview_url) in enumerate(expanded):
         name = resume.filename or f"resume-{position + 1}.pdf"
         try:
             result = await analyze(resume=resume, job_description=job_description)
-            # Preserve the source filename and make uncertainty visible in the queue.
             result["filename"] = name
+            result["preview_url"] = preview_url
             result["review_required"] = result.get("mismatch", False) or result.get("score", 0) < 45
             result["shortlist_recommended"] = False
             results.append(result)
         except HTTPException as exc:
             errors.append({"filename": name, "error": str(exc.detail)})
+
     results.sort(key=lambda item: (item.get("score", 0), item.get("requirements_supported", 0)), reverse=True)
     for rank, result in enumerate(results, 1):
         result["rank"] = rank
         result["shortlist_recommended"] = rank <= shortlist_size and not result["review_required"]
     return {
         "job_description_valid": True,
-        "candidate_count": len(resumes),
+        "candidate_count": len(expanded),
         "analyzed_count": len(results),
         "shortlist_size": shortlist_size,
         "candidates": results,
         "errors": errors,
         "human_review_required": True,
-        "notice": "Use this queue as decision support. Review the evidence for every candidate before contacting, advancing, or rejecting anyone.",
+        "notice": "ZIP bundles were expanded into individual PDF candidates. Use this queue as decision support and review the evidence for every candidate.",
     }
 
 
