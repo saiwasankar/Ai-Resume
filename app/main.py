@@ -54,6 +54,27 @@ def jd_skill_list(jd):
     return find_skills(jd)
 
 
+def skill_priority_report(jd: str, resume: str, skills: list[str]) -> list[dict]:
+    """Rank role skills from job language, then mark resume evidence."""
+    required = re.compile(r"\b(required|must|required to|mandatory|essential|core|minimum|need to)\b", re.I)
+    preferred = re.compile(r"\b(preferred|nice to have|bonus|plus|desirable|ideally)\b", re.I)
+    report = []
+    for skill in skills:
+        positions = [m.start() for m in re.finditer(rf"(?<![\w+#]){re.escape(skill)}(?![\w+#])", jd, re.I)]
+        contexts = [jd[max(0, p - 120):p + len(skill) + 120] for p in positions]
+        frequency = min(len(positions), 3) / 3
+        score = 0.35 + frequency * 0.20
+        if any(required.search(context) for context in contexts):
+            score += 0.45
+        elif any(preferred.search(context) for context in contexts):
+            score += 0.10
+        score = round(min(score, 1.0), 2)
+        level = "high" if score >= 0.75 else "medium" if score >= 0.50 else "low"
+        present = has_term(resume, skill)
+        report.append({"skill": skill, "priority": level, "priority_score": score, "status": "matched" if present else "missing"})
+    return sorted(report, key=lambda item: item["priority_score"], reverse=True)
+
+
 def extract_text(data: bytes) -> str:
     with pdfplumber.open(io.BytesIO(data)) as pdf:
         return "\n".join((p.extract_text() or "") for p in pdf.pages)
@@ -103,6 +124,7 @@ async def analyze(resume: UploadFile = File(...), job_description: str = Form(..
     rl = text.lower()
     matched = [s for s in jd_skills if has_term(text, s)]
     missing = [s for s in jd_skills if s not in matched]
+    skill_priorities = skill_priority_report(job_description, text, jd_skills)
     extra = [s for s in find_skills(text) if s not in jd_skills]
     resume_lines = [" ".join(line.split()) for line in text.splitlines() if line.strip()]
     skill_evidence = {
@@ -150,6 +172,7 @@ async def analyze(resume: UploadFile = File(...), job_description: str = Form(..
     return {"score": score, "verdict": verdict, "mismatch": mismatch, "summary": summary,
             "analysis_method": semantic["analysis_method"] + " + criterion-level evidence", "model": model_status(), "breakdown": breakdown, "matched": matched,
             "missing": missing, "extra": extra[:12], "similarity": round(sim * 100),
+            "skill_priorities": skill_priorities,
             "words": len(text.split()), "skill_evidence": skill_evidence,
             "requirements": requirements, "requirements_supported": supported_count,
             "requirements_total": len(requirements), "ats_checks": ats_checks, "recommendations": recs}
