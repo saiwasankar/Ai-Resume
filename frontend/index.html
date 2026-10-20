@@ -72,7 +72,7 @@
     $('#orgAgain').onclick=()=>{$('#orgResults').style.display='none';$('#orgJd').value='';orgFiles.value='';$('#orgFileNote').textContent='No resumes selected.';scrollTo({top:0,behavior:'smooth'})};
     $('#again').onclick=()=>{location.reload()};
     $('#brandHome').onclick=e=>{e.preventDefault();location.href='/'};
-    function showNav(target){$('#modeChooser').style.display=target==='analyze'?'block':'none';$('#individualWorkspace').style.display='none';$('#organizationWorkspace').style.display='none';$('#tracker').style.display=target==='jobs'?'block':'none';$('#history').style.display=target==='history'?'block':'none';$('#navAnalyze').classList.toggle('active',target==='analyze');$('#navJobs').classList.toggle('active',target==='jobs');$('#navHistory').classList.toggle('active',target==='history');scrollTo({top:0,behavior:'smooth'});if(target==='jobs')loadJobs();if(target==='history')loadHistory()}
+    function showNav(target){$('#modeChooser').style.display=target==='analyze'?'block':'none';$('#individualWorkspace').style.display='none';$('#organizationWorkspace').style.display='none';$('#candidateAssessment').hidden=true;$('#candidateAssessment').style.display='none';$('#tracker').style.display=target==='jobs'?'block':'none';$('#history').style.display=target==='history'?'block':'none';$('#navAnalyze').classList.toggle('active',target==='analyze');$('#navJobs').classList.toggle('active',target==='jobs');$('#navHistory').classList.toggle('active',target==='history');scrollTo({top:0,behavior:'smooth'});if(target==='jobs')loadJobs();if(target==='history')loadHistory()}
     $('#navAnalyze').onclick=()=>showNav('analyze');
     $('#navJobs').onclick=()=>showNav('jobs');
     $('#navHistory').onclick=()=>showNav('history');

@@ -203,6 +203,28 @@ def delete_analysis(analysis_id: int):
             raise HTTPException(404, "Analysis history item not found.")
 
 
+def store_pdf_preview(data: bytes) -> str:
+    global PDF_PREVIEW_BYTES
+    token = secrets.token_urlsafe(18)
+    while PDF_PREVIEWS and PDF_PREVIEW_BYTES + len(data) > MAX_PREVIEW_BYTES:
+        old_token, old_data = next(iter(PDF_PREVIEWS.items()))
+        PDF_PREVIEWS.pop(old_token)
+        PDF_PREVIEW_BYTES -= len(old_data)
+    if len(data) > MAX_PREVIEW_BYTES:
+        raise HTTPException(413, "This resume is too large to keep as a temporary preview.")
+    PDF_PREVIEWS[token] = data
+    PDF_PREVIEW_BYTES += len(data)
+    return f"/api/organization/preview/{token}"
+
+
+@app.get("/api/organization/preview/{token}", include_in_schema=False)
+def organization_preview(token: str):
+    data = PDF_PREVIEWS.get(token)
+    if data is None:
+        raise HTTPException(404, "This resume preview has expired. Run the batch again to create a new preview.")
+    return Response(content=data, media_type="application/pdf", headers={"Content-Disposition": "inline"})
+
+
 @app.post("/api/organization/analyze")
 async def organization_analyze(
     job_description: str = Form(...),
