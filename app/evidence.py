@@ -2,6 +2,7 @@
 import re
 
 from .semantic import compare_to_many
+from .reranker import trained_score
 
 GENERIC = {
     "experience", "years", "ability", "strong", "good", "excellent", "skills",
@@ -79,13 +80,19 @@ def analyze_requirements(job_text: str, resume_text: str, recognized_skills: lis
                 best = {"line": line, "similarity": sim, "overlap": overlap}
         explicit_skill = next((s for s in recognized_skills if re.search(rf"(?<![\w+#]){re.escape(s)}(?![\w+#])", requirement, re.I)), None)
         exact_skill = bool(explicit_skill and re.search(rf"(?<![\w+#]){re.escape(explicit_skill)}(?![\w+#])", resume_text, re.I))
-        supported = exact_skill or (best["overlap"] >= 2 and best["similarity"] >= 0.30) or (best["overlap"] >= 3 and best["similarity"] >= 0.18)
+        model_probability = trained_score(requirement, best["line"]) if best["line"] else None
+        semantic_supported = (best["overlap"] >= 2 and best["similarity"] >= 0.30) or (best["overlap"] >= 3 and best["similarity"] >= 0.18)
+        # A trained model can raise or lower confidence, but it cannot override
+        # the requirement that a concrete resume passage exists.
+        supported = exact_skill or (bool(best["line"]) and ((model_probability is not None and model_probability >= 0.70) or semantic_supported))
+        high_confidence = exact_skill or (model_probability is not None and model_probability >= 0.85) or (best["overlap"] >= 3 and best["similarity"] >= 0.3)
         results.append({
             "requirement": requirement,
             "type": req["type"],
             "status": "supported" if supported else "not evidenced",
-            "confidence": "high" if exact_skill or (best["overlap"] >= 3 and best["similarity"] >= 0.3) else "moderate" if supported else "low",
+            "confidence": "high" if high_confidence else "moderate" if supported else "low",
             "evidence": best["line"][:300] if supported else "",
             "evidence_similarity": round(best["similarity"], 3),
+            "model_probability": model_probability,
         })
     return results

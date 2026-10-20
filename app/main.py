@@ -13,6 +13,7 @@ from .feedback import SECTIONS, _years_covered, generate_recommendations
 from .evidence import analyze_requirements
 from .schemas import JobCreate, JobUpdate
 from .semantic import compare_text
+from .reranker import model_status
 from .validation import is_job_description, is_resume, resume_section_headings
 
 
@@ -65,7 +66,7 @@ def home():
 
 @app.get("/api/health", tags=["System"])
 def health():
-    return {"status": "ok", "service": "RoleFit", "version": app.version}
+    return {"status": "ok", "service": "RoleFit", "version": app.version, **model_status()}
 
 
 @app.post("/analyze")
@@ -147,7 +148,7 @@ async def analyze(resume: UploadFile = File(...), job_description: str = Form(..
         {"name": "Measurable impact", "passed": quant > 0, "detail": f"Found quantified detail in {quant} resume lines" if quant else "Add truthful numbers to show scale or outcomes."},
     ]
     return {"score": score, "verdict": verdict, "mismatch": mismatch, "summary": summary,
-            "analysis_method": semantic["analysis_method"] + " + criterion-level evidence", "breakdown": breakdown, "matched": matched,
+            "analysis_method": semantic["analysis_method"] + " + criterion-level evidence", "model": model_status(), "breakdown": breakdown, "matched": matched,
             "missing": missing, "extra": extra[:12], "similarity": round(sim * 100),
             "words": len(text.split()), "skill_evidence": skill_evidence,
             "requirements": requirements, "requirements_supported": supported_count,
