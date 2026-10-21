@@ -149,11 +149,24 @@ async def analyze(resume: UploadFile = File(...), job_description: str = Form(..
 
     requirements = analyze_requirements(job_description, text, jd_skills)
     supported_count = sum(item["status"] == "supported" for item in requirements)
+    # Score traceable evidence quality as well as coverage. This keeps the
+    # score grounded in extracted requirements while avoiding coarse 5-point
+    # jumps when every criterion is treated as a simple yes/no keyword hit.
+    quality_scores = []
+    for item in requirements:
+        if item["status"] != "supported":
+            quality_scores.append(0.0)
+            continue
+        semantic_quality = float(item.get("evidence_similarity") or 0.0)
+        model_quality = float(item.get("model_probability") or 0.0)
+        confidence_quality = {"high": 0.90, "moderate": 0.68, "low": 0.42}.get(item.get("confidence"), 0.42)
+        quality = max(semantic_quality, model_quality, confidence_quality)
+        quality_scores.append(min(1.0, 0.70 + quality * 0.30))
+    evidence_score = sum(quality_scores) / len(requirements) if requirements else 0.0
     coverage = supported_count / len(requirements) if requirements else 0.0
-    # The summary score now reflects only traceable job-criterion evidence.
-    # Structure and formatting remain diagnostics and do not inflate job fit.
-    breakdown = [{"name": "Job requirements with resume evidence", "score": round(coverage * 100, 1), "max": 100}]
-    score = round(coverage * 100)
+    breakdown = [{"name": "Requirement coverage", "score": round(coverage * 100, 1), "max": 100},
+                 {"name": "Evidence quality", "score": round(evidence_score * 100, 1), "max": 100}]
+    score = max(0, min(100, round(evidence_score * 100)))
     # A near-zero similarity and no shared role skills is a likely wrong-file or
     # wrong-role pairing. Surface it plainly and prevent a misleading high score.
     mismatch = bool(requirements) and supported_count == 0 and sim < 0.16
