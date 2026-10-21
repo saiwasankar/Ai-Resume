@@ -4,7 +4,7 @@ import json
 import re
 import secrets
 import zipfile
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from contextlib import asynccontextmanager
 
 import pdfplumber
